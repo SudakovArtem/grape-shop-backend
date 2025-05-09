@@ -41,24 +41,27 @@
     - Скопируйте содержимое из `.env.example` (если он есть) или добавьте следующие переменные:
 
       ```env
-      # База данных (Пример для локального запуска или облачной БД)
-      DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require
+      # Database Credentials
+      DB_HOST=your_db_host
+      DB_PORT=your_db_port
+      DB_USER=your_db_username
+      DB_PASSWORD=your_db_password
+      DB_NAME=your_db_name
 
-      # Секрет для JWT
+      # JWT
       JWT_SECRET=your_strong_jwt_secret_key
+      JWT_EXPIRATION_TIME=3600
 
-      # SendGrid (для отправки email)
-      SENDGRID_API_KEY=your_sendgrid_api_key
-      EMAIL_FROM_ADDRESS=your_verified_sender_email@example.com
-
-      # AWS S3 (для хранения изображений)
+      # AWS Credentials
       AWS_S3_BUCKET_NAME=your_s3_bucket_name
       AWS_REGION=your_aws_region
       AWS_ACCESS_KEY_ID=your_access_key_id
       AWS_SECRET_ACCESS_KEY=your_secret_access_key
+      AWS_S3_ENDPOINT_URL=https://s3.your_region.amazonaws.com
 
-      # Порт приложения (опционально, по умолчанию 3000)
-      # PORT=3000
+      # SendGrid API Key
+      SENDGRID_API_KEY=your_sendgrid_api_key
+      EMAIL_FROM_ADDRESS=your_verified_sender_email@example.com
       ```
 
     - Замените значения на ваши реальные данные.
@@ -66,17 +69,17 @@
 
 4.  **Настройте конфигурацию Drizzle:**
 
-    - Проверьте и при необходимости измените данные для подключения к БД в файле `drizzle.config.ts` (они могут отличаться от `DATABASE_URL`, если Drizzle Kit используется для генерации миграций отдельно).
+    - Проверьте и при необходимости измените данные для подключения к БД в файле `drizzle.config.ts`.
 
 5.  **Примените миграции базы данных:**
 
     - Сгенерируйте миграции (если схемы изменились и вы не делали этого ранее):
       ```bash
-      yarn drizzle-kit generate
+      yarn db:generate
       ```
     - Примените миграции к базе данных:
       ```bash
-      yarn drizzle-kit migrate
+      yarn db:migrate
       ```
 
 6.  **Запустите приложение в режиме разработки:**

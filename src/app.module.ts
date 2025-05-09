@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common'
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
 import { UsersModule } from './users/users.module'
 import { ConfigModule } from '@nestjs/config'
 import { ProductsModule } from './products/products.module'
@@ -33,9 +31,7 @@ import { DbModule } from './db/db.module'
     EmailModule,
     DbModule
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: APP_GUARD,
       useValue: ThrottlerGuard

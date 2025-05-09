@@ -1,0 +1,1 @@
+ALTER TABLE "product_images" ADD COLUMN "s3_file_key" varchar(255) NOT NULL;

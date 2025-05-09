@@ -1,0 +1,45 @@
+import { Module } from '@nestjs/common'
+import { AppController } from './app.controller'
+import { AppService } from './app.service'
+import { UsersModule } from './users/users.module'
+import { ConfigModule } from '@nestjs/config'
+import { ProductsModule } from './products/products.module'
+import { CartsModule } from './carts/carts.module'
+import { OrdersModule } from './orders/orders.module'
+import { LogsModule } from './logs/logs.module'
+import { AwsModule } from './aws/aws.module'
+import { CategoriesModule } from './categories/categories.module'
+import { EmailModule } from './email/email.module'
+import { APP_GUARD } from '@nestjs/core'
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'
+import { DbModule } from './db/db.module'
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 60
+      }
+    ]),
+    UsersModule,
+    ProductsModule,
+    CartsModule,
+    OrdersModule,
+    LogsModule,
+    AwsModule,
+    CategoriesModule,
+    EmailModule,
+    DbModule
+  ],
+  controllers: [AppController],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useValue: ThrottlerGuard
+    }
+  ]
+})
+export class AppModule {}

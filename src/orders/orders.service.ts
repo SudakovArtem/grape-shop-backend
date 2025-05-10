@@ -1,12 +1,15 @@
-import { Inject, Injectable, BadRequestException, NotFoundException } from '@nestjs/common'
+import { Inject, Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common'
 import { DRIZZLE_PROVIDER_TOKEN } from '../db/constants'
 import { carts, products, orders, orderItems, users } from '../db/schema' // Импортируем нужные схемы
-import { eq, inArray, and } from 'drizzle-orm' // Добавлен and, убран дубль inArray
+import { eq, inArray, and, count, desc, asc, SQL } from 'drizzle-orm' // Добавлен and, убран дубль inArray, добавлен count, desc, asc, SQL
 import { alias } from 'drizzle-orm/pg-core'
 import { NodePgDatabase } from 'drizzle-orm/node-postgres' // Импортируем тип для транзакции
 import * as schema from '../db/schema' // Импортируем все схемы для транзакции
 import { LogsService } from '../logs/logs.service' // Импорт LogsService
 import { EmailService } from '../email/email.service' // Импорт EmailService
+import { FindMyOrdersQueryDto } from './dto/find-my-orders-query.dto' // Импортируем DTO
+import { FindAllOrdersQueryDto } from './dto/find-all-orders-query.dto' // Импортируем новый DTO
+import { AuthenticatedUser } from '../users/jwt.strategy' // Импортируем AuthenticatedUser
 
 // Определяем тип DrizzleDB с указанием схемы для транзакций
 export type DrizzleDB = NodePgDatabase<typeof schema>
@@ -16,6 +19,17 @@ export type Order = typeof orders.$inferSelect
 export type OrderItem = typeof orderItems.$inferSelect
 export interface OrderWithItems extends Order {
   items: OrderItem[]
+}
+
+// Тип для ответа с пагинацией
+export interface PaginatedOrdersResponse {
+  data: OrderWithItems[]
+  meta: {
+    total: number
+    page: number
+    limit: number
+    lastPage: number
+  }
 }
 
 @Injectable()
@@ -133,26 +147,44 @@ export class OrdersService {
     })
   }
 
-  async getOrders(userId: number): Promise<OrderWithItems[]> {
-    // 1. Получить все заказы пользователя
-    const userOrders = await this.drizzle.select().from(orders).where(eq(orders.userId, userId))
-    // Можно добавить сортировку по дате создания
-    // .orderBy(desc(orders.createdAt));
+  async getOrders(userId: number, queryDto: FindMyOrdersQueryDto): Promise<PaginatedOrdersResponse> {
+    const { page = 1, limit = 10, status, sortBy = '-createdAt' } = queryDto
+    const offset = (page - 1) * limit
 
-    if (userOrders.length === 0) {
-      return [] // Если заказов нет, возвращаем пустой массив
+    const conditions: SQL[] = [eq(orders.userId, userId)]
+    if (status) {
+      conditions.push(eq(orders.status, status))
     }
 
-    // 2. Получить ID всех заказов
+    const whereCondition = and(...conditions)
+
+    let orderByClause = desc(orders.createdAt) // Сортировка по умолчанию
+    if (sortBy === 'createdAt') {
+      orderByClause = asc(orders.createdAt)
+    } else if (sortBy === '-createdAt') {
+      orderByClause = desc(orders.createdAt)
+    }
+
+    // 1. Получить заказы пользователя для текущей страницы с учетом фильтров и сортировки
+    const userOrders = await this.drizzle
+      .select()
+      .from(orders)
+      .where(whereCondition) // Используем объединенные условия
+      .orderBy(orderByClause) // Используем клаузу сортировки
+      .limit(limit)
+      .offset(offset)
+
+    if (userOrders.length === 0) {
+      return {
+        data: [],
+        meta: { total: 0, page, limit, lastPage: 1 }
+      }
+    }
+
     const orderIds = userOrders.map((order) => order.id)
 
-    // 3. Получить все позиции для этих заказов одним запросом
-    const allOrderItems = await this.drizzle
-      .select() // Убрал явное указание полей, так как p_items не используется
-      .from(orderItems)
-      .where(inArray(orderItems.orderId, orderIds))
+    const allOrderItems = await this.drizzle.select().from(orderItems).where(inArray(orderItems.orderId, orderIds))
 
-    // 4. Сгруппировать позиции по orderId
     const itemsByOrderId = allOrderItems.reduce(
       (acc, item) => {
         if (!acc[item.orderId]) {
@@ -164,72 +196,93 @@ export class OrdersService {
       {} as Record<number, OrderItem[]>
     )
 
-    // 5. Собрать результат: добавить массив items к каждому заказу
     const ordersWithItems: OrderWithItems[] = userOrders.map((order) => ({
       ...order,
-      items: itemsByOrderId[order.id] || [] // Добавляем пустой массив, если у заказа нет позиций (маловероятно)
+      items: itemsByOrderId[order.id] || []
     }))
 
-    return ordersWithItems
+    // 2. Получить общее количество заказов пользователя для метаданных (с учетом фильтра по статусу)
+    const totalResult = await this.drizzle
+      .select({ count: count(orders.id) })
+      .from(orders)
+      .where(whereCondition) // Используем те же условия для подсчета
+
+    const total = totalResult[0].count
+
+    return {
+      data: ordersWithItems,
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit)
+      }
+    }
   }
 
-  async getOrderById(orderId: number, userId: number): Promise<OrderWithItems> {
-    const orderArray = await this.drizzle
-      .select()
-      .from(orders)
-      .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
-      .limit(1)
+  async getOrderById(orderId: number, currentUser: AuthenticatedUser): Promise<OrderWithItems> {
+    // Сначала просто ищем заказ по ID
+    const orderArray = await this.drizzle.select().from(orders).where(eq(orders.id, orderId)).limit(1)
 
     if (orderArray.length === 0) {
-      throw new NotFoundException(`Заказ с ID ${orderId} не найден или не принадлежит вам.`)
+      throw new NotFoundException(`Заказ с ID ${orderId} не найден.`)
     }
     const order = orderArray[0]
+
+    // Проверка прав доступа
+    if (currentUser.role !== 'admin' && order.userId !== currentUser.id) {
+      throw new ForbiddenException('У вас нет прав для просмотра этого заказа.')
+    }
 
     const items = await this.drizzle.select().from(orderItems).where(eq(orderItems.orderId, orderId))
 
     return { ...order, items }
   }
 
-  async cancelOrder(orderId: number, userId: number): Promise<Order> {
-    // Используем транзакцию, чтобы убедиться, что чтение и обновление атомарны
+  async cancelOrder(orderId: number, currentUser: AuthenticatedUser): Promise<OrderWithItems> {
     return this.drizzle.transaction(async (tx) => {
+      // При отмене заказа, права проверяются строже: только владелец заказа
+      // (или админ, если такая логика будет добавлена сюда позже, сейчас только владелец)
       const orderToCancelArray = await tx
         .select()
         .from(orders)
-        .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
+        // .where(and(eq(orders.id, orderId), eq(orders.userId, userId))) // Старая проверка
+        .where(eq(orders.id, orderId)) // Сначала находим заказ
         .limit(1)
 
       if (orderToCancelArray.length === 0) {
-        throw new NotFoundException(`Заказ с ID ${orderId} не найден или не принадлежит вам.`)
+        throw new NotFoundException(`Заказ с ID ${orderId} не найден.`)
       }
       const orderToCancel = orderToCancelArray[0]
 
-      // Проверяем, можно ли отменить заказ
-      // Например, нельзя отменить уже отправленный или доставленный заказ
+      // Проверка прав: только владелец может отменить свой заказ
+      // Если админ должен иметь возможность отменять любые заказы, эту логику нужно будет расширить
+      if (orderToCancel.userId !== currentUser.id) {
+        // Если и админ может отменять, то условие будет: if (currentUser.role !== 'admin' && orderToCancel.userId !== currentUser.id)
+        throw new ForbiddenException('Вы можете отменить только свои заказы.')
+      }
+
       if (['Отправлен', 'Доставлен'].includes(orderToCancel.status)) {
         throw new BadRequestException(`Заказ в статусе "${orderToCancel.status}" не может быть отменен.`)
       }
 
       if (orderToCancel.status === 'Отменен') {
-        // Если уже отменен, просто возвращаем его
-        return orderToCancel
+        const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderToCancel.id))
+        return { ...orderToCancel, items }
       }
 
       const updatedOrderArray = await tx
         .update(orders)
         .set({ status: 'Отменен' })
-        .where(eq(orders.id, orderId)) // userId здесь уже проверен выше
+        .where(eq(orders.id, orderId))
         .returning()
 
       if (updatedOrderArray.length === 0) {
-        // Этого не должно произойти, если предыдущие проверки прошли
         throw new Error('Не удалось отменить заказ.')
       }
-
       const updatedOrder = updatedOrderArray[0]
 
-      // --- Отправляем email об отмене заказа (опционально, но хорошая практика) ---
-      const userInfo = await tx.select({ email: users.email }).from(users).where(eq(users.id, userId)).limit(1)
+      const userInfo = await tx.select({ email: users.email }).from(users).where(eq(users.id, currentUser.id)).limit(1)
       if (userInfo.length > 0 && userInfo[0].email) {
         try {
           await this.emailService.sendOrderStatusUpdateEmail(userInfo[0].email, updatedOrder.id, updatedOrder.status)
@@ -238,16 +291,87 @@ export class OrdersService {
             `Ошибка при отправке email об отмене заказа ${updatedOrder.id} пользователю ${userInfo[0].email}:`,
             error
           )
-          // Не прерываем процесс из-за ошибки email
         }
       }
-      // -------------------------------------------------------------------------
-
-      // --- Логируем отмену заказа (опционально) ---
-      await this.logsService.createLog('order_cancelled', userId)
-      // --------------------------------------------
-
-      return updatedOrder
+      await this.logsService.createLog('order_cancelled', currentUser.id)
+      const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, updatedOrder.id))
+      return { ...updatedOrder, items }
     })
+  }
+
+  async findAllOrders(queryDto: FindAllOrdersQueryDto): Promise<PaginatedOrdersResponse> {
+    const { page = 1, limit = 10, userId, status, sortBy = '-createdAt' } = queryDto
+    const offset = (page - 1) * limit
+
+    const conditions: SQL[] = [] // Начинаем с пустого массива условий
+
+    if (userId) {
+      conditions.push(eq(orders.userId, userId))
+    }
+    if (status) {
+      conditions.push(eq(orders.status, status))
+    }
+
+    // Если conditions пустой, whereCondition будет undefined, что Drizzle обработает как отсутствие WHERE
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined
+
+    let orderByClause = desc(orders.createdAt) // Сортировка по умолчанию
+    if (sortBy === 'createdAt') {
+      orderByClause = asc(orders.createdAt)
+    } else if (sortBy === '-createdAt') {
+      orderByClause = desc(orders.createdAt)
+    }
+
+    const allOrdersResults = await this.drizzle
+      .select()
+      .from(orders)
+      .where(whereCondition)
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset)
+
+    if (allOrdersResults.length === 0) {
+      return {
+        data: [],
+        meta: { total: 0, page, limit, lastPage: 1 }
+      }
+    }
+
+    const orderIds = allOrdersResults.map((order) => order.id)
+
+    const allOrderItems = await this.drizzle.select().from(orderItems).where(inArray(orderItems.orderId, orderIds))
+
+    const itemsByOrderId = allOrderItems.reduce(
+      (acc, item) => {
+        if (!acc[item.orderId]) {
+          acc[item.orderId] = []
+        }
+        acc[item.orderId].push(item)
+        return acc
+      },
+      {} as Record<number, OrderItem[]>
+    )
+
+    const ordersWithItems: OrderWithItems[] = allOrdersResults.map((order) => ({
+      ...order,
+      items: itemsByOrderId[order.id] || []
+    }))
+
+    const totalResult = await this.drizzle
+      .select({ count: count(orders.id) })
+      .from(orders)
+      .where(whereCondition)
+
+    const total = totalResult[0].count
+
+    return {
+      data: ordersWithItems,
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit)
+      }
+    }
   }
 }

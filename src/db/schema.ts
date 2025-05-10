@@ -52,11 +52,11 @@ export const users = pgTable('users', {
 export const carts = pgTable('carts', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
-    .references(() => users.id)
-    .notNull(), // Корзина должна быть связана с пользователем
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
   productId: integer('product_id')
     .references(() => products.id)
-    .notNull(), // Продукт в корзине должен существовать
+    .notNull(),
   type: varchar('type', { length: 20 }).notNull(), // 'cutting' or 'seedling'
   quantity: integer('quantity').notNull()
   // total_price в ТЗ указан для корзины, но обычно он рассчитывается на лету или при оформлении заказа.
@@ -67,7 +67,7 @@ export const carts = pgTable('carts', {
 export const orders = pgTable('orders', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   totalPrice: decimal('total_price', { precision: 10, scale: 2 }).notNull(),
   status: varchar('status', { length: 50 }).notNull(), // "Создан", "В обработке", "Отправлен", "Доставлен", "Отменен"
@@ -77,7 +77,7 @@ export const orders = pgTable('orders', {
 export const orderItems = pgTable('order_items', {
   id: serial('id').primaryKey(),
   orderId: integer('order_id')
-    .references(() => orders.id)
+    .references(() => orders.id, { onDelete: 'cascade' })
     .notNull(),
   productId: integer('product_id')
     .references(() => products.id)

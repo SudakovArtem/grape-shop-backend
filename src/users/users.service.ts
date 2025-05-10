@@ -4,20 +4,24 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
-  BadRequestException
+  BadRequestException,
+  ForbiddenException,
+  InternalServerErrorException
 } from '@nestjs/common'
 import { DRIZZLE_PROVIDER_TOKEN } from '../db/constants'
 import { db } from '../db' // Импортируем тип нашего db инстанса
-import { users } from '../db/schema' // Убираем импорт типа User, он будет выведен
+import { users, logs } from '../db/schema' // Убираем импорт orders
 import { CreateUserDto } from './dto/create-user.dto'
 import { LoginUserDto } from './dto/login-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
-import { eq, and, gt } from 'drizzle-orm' // Импортируем eq, and, gt для выражений WHERE
+import { eq, and, gt, ilike, SQL, desc, count, asc } from 'drizzle-orm' // Убрал asc, добавил desc, count
 import * as bcrypt from 'bcrypt'
 import { JwtService } from '@nestjs/jwt'
 import { LogsService } from '../logs/logs.service' // Импорт LogsService
 import { EmailService } from '../email/email.service' // Импортируем EmailService
 import * as crypto from 'crypto'
+import { FindAllUsersQueryDto } from './dto/find-all-users-query.dto'
+import { AuthenticatedUser } from './jwt.strategy'
 
 // Определяем тип для нашего db инстанса для удобства
 export type DrizzleDB = typeof db
@@ -29,6 +33,12 @@ export type UserSelect = typeof users.$inferSelect
 export type SafeUser = Omit<UserSelect, 'password' | 'resetPasswordToken' | 'resetPasswordExpires'> & {
   role: UserSelect['role']
 }
+
+// Определяем тип для объекта SelectQueryBuilder, который возвращает Drizzle
+// Это может потребовать импорта специфичного типа из drizzle-orm/pg-core если он есть,
+// или использования общего типа, если он подходит.
+// Для примера, используем ReturnType от базового запроса, если это возможно, или any как крайнюю меру.
+// Более точный тип был бы лучше, например, что-то вроде PgSelect<...
 
 @Injectable()
 export class UsersService {
@@ -232,28 +242,116 @@ export class UsersService {
       .where(eq(users.id, foundUser.id))
   }
 
-  // Метод для установки роли (пример)
-  async setRole(userId: number, newRole: UserSelect['role']): Promise<SafeUser> {
-    if (!['user', 'admin'].includes(newRole)) {
-      throw new BadRequestException('Недопустимая роль.')
+  // Метод для установки роли пользователю (пример)
+  async setRole(userId: number, role: 'user' | 'admin'): Promise<SafeUser> {
+    const updatedUsers = await this.drizzle.update(users).set({ role: role }).where(eq(users.id, userId)).returning({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      address: users.address,
+      phone: users.phone,
+      role: users.role,
+      createdAt: users.createdAt
+    })
+
+    if (updatedUsers.length === 0) {
+      throw new NotFoundException(`Пользователь с ID ${userId} не найден.`)
     }
-    const updatedResult = await this.drizzle
-      .update(users)
-      .set({ role: newRole })
-      .where(eq(users.id, userId))
-      .returning({
+    return updatedUsers[0]
+  }
+
+  async remove(idToDelete: number, currentUser: AuthenticatedUser): Promise<void> {
+    const userToDeleteResult = await this.drizzle
+      .select({ id: users.id, role: users.role })
+      .from(users)
+      .where(eq(users.id, idToDelete))
+      .limit(1)
+
+    if (userToDeleteResult.length === 0) {
+      throw new NotFoundException(`Пользователь с ID ${idToDelete} не найден.`)
+    }
+
+    if (currentUser.id !== idToDelete && currentUser.role !== 'admin') {
+      throw new ForbiddenException('У вас нет прав для удаления этого пользователя.')
+    }
+
+    try {
+      await this.drizzle.transaction(async (tx) => {
+        // Удаление связанных логов (оставляем, так как для logs нет каскадного удаления)
+        await tx.delete(logs).where(eq(logs.userId, idToDelete))
+
+        // Удаление carts и orders (и связанных orderItems) будет выполнено каскадно базой данных.
+        // Поэтому явное удаление их здесь не требуется.
+
+        const deleteResult = await tx.delete(users).where(eq(users.id, idToDelete))
+
+        if (deleteResult.rowCount === 0) {
+          throw new InternalServerErrorException(
+            `Не удалось удалить пользователя с ID ${idToDelete} в ходе транзакции.`
+          )
+        }
+      })
+    } catch (error) {
+      // Перебрасываем известные ожидаемые ошибки (NotFoundException, ForbiddenException)
+      // ConflictException из-за заказов больше не должен возникать здесь.
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error
+      }
+      console.error(`Ошибка при удалении пользователя ID ${idToDelete} и связанных данных:`, error)
+      throw new InternalServerErrorException(
+        `Произошла ошибка при удалении пользователя и связанных данных. Пожалуйста, попробуйте снова.`
+      )
+    }
+
+    await this.logsService.createLog('user_deleted', currentUser.id)
+  }
+
+  async findAllUsers(
+    queryDto: FindAllUsersQueryDto
+  ): Promise<{ data: SafeUser[]; meta: { total: number; page: number; limit: number; lastPage: number } }> {
+    const { page = 1, limit = 10, email: emailQuery, sortBy = '-createdAt' } = queryDto
+    const offset = (page - 1) * limit
+
+    const conditions: (SQL | undefined)[] = []
+    if (emailQuery) {
+      conditions.push(ilike(users.email, `%${emailQuery}%`))
+    }
+
+    const whereCondition = conditions.length > 0 ? and(...conditions.filter((c): c is SQL => !!c)) : undefined
+
+    const orderByClause = sortBy === 'createdAt' ? asc(users.createdAt) : desc(users.createdAt)
+
+    const result = await this.drizzle
+      .select({
         id: users.id,
         email: users.email,
         name: users.name,
         address: users.address,
         phone: users.phone,
-        role: users.role, // Возвращаем роль
+        role: users.role,
         createdAt: users.createdAt
       })
+      .from(users)
+      .where(whereCondition)
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset)
 
-    if (updatedResult.length === 0) {
-      throw new NotFoundException(`Пользователь с ID ${userId} не найден.`)
+    const totalResult = await this.drizzle
+      .select({ count: count(users.id) }) // Используем count(users.id) вместо countDistinct
+      .from(users)
+      .where(whereCondition)
+
+    const total = totalResult[0].count
+
+    return {
+      data: result,
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit)
+      }
     }
-    return updatedResult[0]
   }
 }

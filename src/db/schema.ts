@@ -43,6 +43,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 255 }),
   address: text('address'),
   phone: varchar('phone', { length: 20 }),
+  avatar: varchar('avatar', { length: 512 }), // Новое поле для URL аватара
   role: userRoleEnum('role').default('user').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   resetPasswordToken: varchar('reset_password_token', { length: 255 }), // Хэшированный токен

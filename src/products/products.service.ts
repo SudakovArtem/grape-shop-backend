@@ -14,7 +14,7 @@ export type DrizzleDB = typeof db
 // Тип для результата основного запроса
 type ProductQueryResult = Omit<typeof products.$inferSelect, 'password'> & { categoryName: string | null }
 // Тип для конечного результата с изображениями
-type ProductWithImages = ProductQueryResult & { images: string[] }
+type ProductWithImages = ProductQueryResult & { images: { id: number; url: string }[] }
 
 @Injectable()
 export class ProductsService {
@@ -218,6 +218,7 @@ export class ProductsService {
       const imagesData = await this.drizzle
         .select({
           productId: productImages.productId,
+          id: productImages.id,
           imageUrl: productImages.imageUrl
         })
         .from(productImages)
@@ -228,15 +229,15 @@ export class ProductsService {
           if (!acc[img.productId]) {
             acc[img.productId] = []
           }
-          acc[img.productId].push(img.imageUrl)
+          acc[img.productId].push({ id: img.id, url: img.imageUrl })
           return acc
         },
-        {} as Record<number, string[]>
+        {} as Record<number, { id: number; url: string }[]>
       )
 
       // Добавляем изображения к результатам
       productsWithImages = results.map((product) => ({
-        ...product, // Просто копируем все поля из product
+        ...product,
         images: imagesMap[product.id] || []
       }))
     }
@@ -271,13 +272,14 @@ export class ProductsService {
     // Получаем все изображения для этого продукта
     const imagesData = await this.drizzle
       .select({
+        id: productImages.id,
         imageUrl: productImages.imageUrl
       })
       .from(productImages)
       .where(eq(productImages.productId, id))
 
     const product = productData[0]
-    const images = imagesData.map((img) => img.imageUrl)
+    const images = imagesData.map((img) => ({ id: img.id, url: img.imageUrl }))
 
     return {
       ...product,

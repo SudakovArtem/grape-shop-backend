@@ -30,8 +30,12 @@ export type DrizzleDB = typeof db
 // и создаем SafeUser, исключая поля, которые не должны отправляться клиенту
 export type UserSelect = typeof users.$inferSelect
 // Добавляем 'role' в SafeUser, так как он теперь является частью схемы и нужен
+// Добавляем 'avatar' в SafeUser, так как он теперь является частью схемы
+// Omit теперь включает и 'avatar' из UserSelect, если он там был, но нам нужно его явно включить в SafeUser
+// Правильнее будет так: сначала Omit, потом добавляем нужные поля, включая role и avatar из UserSelect
 export type SafeUser = Omit<UserSelect, 'password' | 'resetPasswordToken' | 'resetPasswordExpires'> & {
   role: UserSelect['role']
+  avatar: UserSelect['avatar'] // Убедимся, что avatar здесь указан как обязательный (или nullable, если схема позволяет)
 }
 
 // Определяем тип для объекта SelectQueryBuilder, который возвращает Drizzle
@@ -65,10 +69,10 @@ export class UsersService {
       .values({
         email,
         password: hashedPassword,
-        name, // Добавляем при создании
-        address, // Добавляем при создании
-        phone // Добавляем при создании
-        // role будет 'user' по умолчанию из схемы БД
+        name,
+        address,
+        phone
+        // avatar будет null по умолчанию или его можно добавить в CreateUserDto опционально
       })
       .returning({
         id: users.id,
@@ -76,7 +80,8 @@ export class UsersService {
         name: users.name,
         address: users.address,
         phone: users.phone,
-        role: users.role, // Добавляем role в returning
+        avatar: users.avatar, // Добавляем avatar
+        role: users.role,
         createdAt: users.createdAt
       })
 
@@ -128,7 +133,8 @@ export class UsersService {
         name: users.name,
         address: users.address,
         phone: users.phone,
-        role: users.role, // Добавляем role в select
+        avatar: users.avatar, // Добавляем avatar
+        role: users.role,
         createdAt: users.createdAt
       })
       .from(users)
@@ -142,15 +148,17 @@ export class UsersService {
   }
 
   async updateProfile(userId: number, updateUserDto: UpdateUserDto): Promise<SafeUser> {
-    const { name, address, phone } = updateUserDto
+    const { name, address, phone, avatar } = updateUserDto // Добавляем avatar
 
     // Уточняем тип для dataToUpdate, чтобы он соответствовал возможным полям для обновления
-    const dataToUpdate: Partial<Pick<UserSelect, 'name' | 'address' | 'phone'>> = {}
+    const dataToUpdate: Partial<Pick<UserSelect, 'name' | 'address' | 'phone' | 'avatar'>> = {} // Добавляем avatar
     if (name !== undefined) dataToUpdate.name = name
     if (address !== undefined) dataToUpdate.address = address
     if (phone !== undefined) dataToUpdate.phone = phone
+    if (avatar !== undefined) dataToUpdate.avatar = avatar // Добавляем обработку avatar
 
     if (Object.keys(dataToUpdate).length === 0) {
+      // Если нет данных для обновления, просто возвращаем текущего пользователя
       const currentUser = await this.drizzle
         .select({
           id: users.id,
@@ -158,7 +166,8 @@ export class UsersService {
           name: users.name,
           address: users.address,
           phone: users.phone,
-          role: users.role, // Добавляем role в select
+          avatar: users.avatar,
+          role: users.role,
           createdAt: users.createdAt
         })
         .from(users)
@@ -174,7 +183,8 @@ export class UsersService {
       name: users.name,
       address: users.address,
       phone: users.phone,
-      role: users.role, // Добавляем role в returning
+      avatar: users.avatar, // Убедимся, что avatar возвращается
+      role: users.role,
       createdAt: users.createdAt
     })
 
@@ -250,6 +260,7 @@ export class UsersService {
       name: users.name,
       address: users.address,
       phone: users.phone,
+      avatar: users.avatar, // Добавляем avatar
       role: users.role,
       createdAt: users.createdAt
     })
@@ -328,6 +339,7 @@ export class UsersService {
         name: users.name,
         address: users.address,
         phone: users.phone,
+        avatar: users.avatar, // Добавляем avatar
         role: users.role,
         createdAt: users.createdAt
       })
@@ -353,5 +365,27 @@ export class UsersService {
         lastPage: Math.ceil(total / limit)
       }
     }
+  }
+
+  async findUserByIdForAdmin(userId: number): Promise<SafeUser> {
+    const user = await this.drizzle
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        address: users.address,
+        phone: users.phone,
+        avatar: users.avatar, // Добавляем avatar
+        role: users.role,
+        createdAt: users.createdAt
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+
+    if (user.length === 0) {
+      throw new NotFoundException(`Пользователь с ID ${userId} не найден.`)
+    }
+    return user[0]
   }
 }

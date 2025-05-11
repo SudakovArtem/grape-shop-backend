@@ -97,6 +97,19 @@ export class UsersController {
     return await this.usersService.updateProfile(userId, updateUserDto)
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Получить информацию о пользователе по ID (только для администраторов)' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: HttpStatus.OK, description: 'Информация о пользователе.', type: Object })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Пользователь не найден.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Доступ запрещен.' })
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  async findUserById(@Param('id', ParseIntPipe) id: number): Promise<SafeUser> {
+    return this.usersService.findUserByIdForAdmin(id)
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Удалить пользователя (доступно самому пользователю или администратору)' })
   @ApiBearerAuth()

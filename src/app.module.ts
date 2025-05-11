@@ -6,6 +6,7 @@ import { CartsModule } from './carts/carts.module'
 import { OrdersModule } from './orders/orders.module'
 import { LogsModule } from './logs/logs.module'
 import { AwsModule } from './aws/aws.module'
+import { UploadsModule } from './uploads/uploads.module'
 import { CategoriesModule } from './categories/categories.module'
 import { EmailModule } from './email/email.module'
 import { APP_GUARD } from '@nestjs/core'
@@ -29,6 +30,7 @@ import { DbModule } from './db/db.module'
     AwsModule,
     CategoriesModule,
     EmailModule,
+    UploadsModule,
     DbModule
   ],
   providers: [

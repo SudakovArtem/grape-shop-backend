@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, IsPhoneNumber } from 'class-validator'
+import { IsOptional, IsString, MaxLength, IsPhoneNumber, IsUrl } from 'class-validator'
 import { ApiPropertyOptional } from '@nestjs/swagger'
 
 export class UpdateUserDto {
@@ -17,4 +17,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsPhoneNumber(undefined, { message: 'Некорректный номер телефона' }) // Заменено null на undefined
   phone?: string
+
+  @ApiPropertyOptional({
+    description: 'URL аватара пользователя. Должен быть валидным URL изображения, полученным через эндпоинт /uploads.',
+    example: 'https://storage.yandexcloud.net/your-bucket/user-uploads/avatar.jpg'
+  })
+  @IsOptional()
+  @IsUrl({}, { message: 'Avatar must be a valid URL' })
+  avatar?: string
 }

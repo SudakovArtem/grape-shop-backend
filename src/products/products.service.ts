@@ -155,7 +155,7 @@ export class ProductsService {
 
     // Поиск по ключевым словам (в названии ИЛИ описании)
     if (search) {
-      conditions.push(or(ilike(products.name, `%${search}%`), ilike(products.description, `%${search}%`)))
+      conditions.push(ilike(products.name, `%${search}%`))
     }
 
     // Формируем финальное условие WHERE

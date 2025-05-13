@@ -59,9 +59,9 @@
       AWS_SECRET_ACCESS_KEY=your_secret_access_key
       AWS_S3_ENDPOINT_URL=https://s3.your_region.amazonaws.com
 
-      # SendGrid API Key
-      SENDGRID_API_KEY=your_sendgrid_api_key
-      EMAIL_FROM_ADDRESS=your_verified_sender_email@example.com
+      # Mail config
+      MAIL_TRANSPORT=smtp://<your_email>:<your_password>@smtp.<your_mail_provider>.com
+      MAIL_FROM_NAME=<your_email_name>
       ```
 
     - Замените значения на ваши реальные данные.

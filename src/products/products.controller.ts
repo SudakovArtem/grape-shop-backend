@@ -18,7 +18,7 @@ import {
   UseGuards
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
-import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody, ApiQuery, ApiOperation } from '@nestjs/swagger'
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody, ApiQuery, ApiOperation, ApiResponse } from '@nestjs/swagger'
 import { AuthGuard } from '@nestjs/passport'
 import { ProductsService } from './products.service'
 import { FindAllProductsQueryDto } from './dto/find-all-products-query.dto'
@@ -26,6 +26,8 @@ import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
 import { Roles } from '../auth/decorators/roles.decorator'
 import { RolesGuard } from '../auth/guards/roles.guard'
+import { ProductResponseDto } from './dto/product-response.dto'
+import { PaginatedProductResponseDto } from './dto/paginated-product-response.dto'
 
 @ApiTags('Products')
 @Controller('products')
@@ -38,6 +40,10 @@ export class ProductsController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin')
   @HttpCode(HttpStatus.CREATED)
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Продукт успешно создан.', type: ProductResponseDto })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Неверные данные для создания продукта.' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Пользователь не авторизован.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Недостаточно прав.' })
   async create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto)
   }
@@ -45,6 +51,11 @@ export class ProductsController {
   @Get()
   @ApiOperation({ summary: 'Получить список всех продуктов с фильтрацией и пагинацией' })
   @HttpCode(HttpStatus.OK)
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Список продуктов с пагинацией.',
+    type: PaginatedProductResponseDto
+  })
   async findAll(@Query() query: FindAllProductsQueryDto) {
     return this.productsService.findAll(query)
   }
@@ -52,6 +63,8 @@ export class ProductsController {
   @Get(':id')
   @ApiOperation({ summary: 'Получить продукт по ID' })
   @HttpCode(HttpStatus.OK)
+  @ApiResponse({ status: HttpStatus.OK, description: 'Продукт найден.', type: ProductResponseDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Продукт с таким ID не найден.' })
   async findOne(@Param('id', ParseIntPipe) id: number) {
     // ParseIntPipe автоматически преобразует строковый параметр :id в число и выбросит ошибку, если это не так.
     return this.productsService.findOne(id)
@@ -63,6 +76,11 @@ export class ProductsController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
+  @ApiResponse({ status: HttpStatus.OK, description: 'Продукт успешно обновлен.', type: ProductResponseDto })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Неверные данные для обновления продукта.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Продукт с таким ID не найден.' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Пользователь не авторизован.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Недостаточно прав.' })
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateProductDto: UpdateProductDto) {
     return this.productsService.update(id, updateProductDto)
   }
@@ -73,6 +91,10 @@ export class ProductsController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Продукт успешно удален.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Продукт с таким ID не найден.' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Пользователь не авторизован.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Недостаточно прав.' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.productsService.remove(id)
   }
@@ -112,6 +134,14 @@ export class ProductsController {
     })
   )
   @HttpCode(HttpStatus.CREATED)
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Изображение успешно добавлено к продукту.',
+    type: ProductResponseDto
+  })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Ошибка при загрузке файла или неверный ID продукта.' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Пользователь не авторизован.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Недостаточно прав.' })
   async addProductImage(
     @Param('productId', ParseIntPipe) productId: number,
     @UploadedFile() file: Express.Multer.File, // Тип Express.Multer.File
@@ -129,6 +159,10 @@ export class ProductsController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Изображение успешно удалено.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Продукт или изображение не найдено.' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Пользователь не авторизован.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Недостаточно прав.' })
   async removeProductImage(
     @Param('productId', ParseIntPipe) productId: number,
     @Param('imageId', ParseIntPipe) imageId: number

@@ -10,6 +10,11 @@ import { EmailService } from '../email/email.service' // Импорт EmailServi
 import { FindMyOrdersQueryDto } from './dto/find-my-orders-query.dto' // Импортируем DTO
 import { FindAllOrdersQueryDto } from './dto/find-all-orders-query.dto' // Импортируем новый DTO
 import { AuthenticatedUser } from '../users/jwt.strategy' // Импортируем AuthenticatedUser
+import { OrderResponseDto } from './dto/order-response.dto'
+import { OrderItemResponseDto } from './dto/order-item-response.dto'
+import { PaginatedOrderResponseDto } from './dto/paginated-order-response.dto'
+import { OrderSystemStatus } from './dto/order-status.enum'
+import { PaginationMetaDto } from '../common/dto/pagination-meta.dto'
 
 // Определяем тип DrizzleDB с указанием схемы для транзакций
 export type DrizzleDB = NodePgDatabase<typeof schema>
@@ -21,14 +26,20 @@ export interface OrderWithItems extends Order {
   items: OrderItem[]
 }
 
-// Тип для ответа с пагинацией
-export interface PaginatedOrdersResponse {
-  data: OrderWithItems[]
-  meta: {
-    total: number
-    page: number
-    limit: number
-    lastPage: number
+// Функция для маппинга OrderWithItems в OrderResponseDto
+function toOrderResponseDto(order: OrderWithItems): OrderResponseDto {
+  return {
+    ...order,
+    status: order.status as OrderSystemStatus, // Приведение к enum
+    createdAt: order.createdAt, // createdAt может быть null из БД
+    totalPrice: String(order.totalPrice), // Преобразование Decimal в string
+    items: order.items.map(
+      (item) =>
+        ({
+          ...item,
+          price: String(item.price) // Преобразование Decimal в string
+        }) as OrderItemResponseDto
+    )
   }
 }
 
@@ -41,9 +52,9 @@ export class OrdersService {
     private readonly emailService: EmailService // Инъекция EmailService
   ) {}
 
-  async createOrder(userId: number): Promise<OrderWithItems> {
+  async createOrder(userId: number): Promise<OrderResponseDto> {
     // Выполняем все операции внутри транзакции
-    return this.drizzle.transaction(async (tx) => {
+    const createdOrderWithItems = await this.drizzle.transaction(async (tx) => {
       // 1. Получить товары из корзины пользователя
       const p = alias(products, 'p')
       const userCartItems = await tx
@@ -145,9 +156,10 @@ export class OrdersService {
       // 7. Вернуть созданный заказ с позициями
       return { ...newOrder[0], items: insertedItems }
     })
+    return toOrderResponseDto(createdOrderWithItems)
   }
 
-  async getOrders(userId: number, queryDto: FindMyOrdersQueryDto): Promise<PaginatedOrdersResponse> {
+  async getOrders(userId: number, queryDto: FindMyOrdersQueryDto): Promise<PaginatedOrderResponseDto> {
     const { page = 1, limit = 10, status, sortBy = '-createdAt' } = queryDto
     const offset = (page - 1) * limit
 
@@ -208,19 +220,20 @@ export class OrdersService {
       .where(whereCondition) // Используем те же условия для подсчета
 
     const total = totalResult[0].count
+    const meta: PaginationMetaDto = {
+      total,
+      page,
+      limit,
+      lastPage: Math.ceil(total / limit) || 1 // Гарантируем, что lastPage всегда будет как минимум 1
+    }
 
     return {
-      data: ordersWithItems,
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit)
-      }
+      data: ordersWithItems.map(toOrderResponseDto),
+      meta
     }
   }
 
-  async getOrderById(orderId: number, currentUser: AuthenticatedUser): Promise<OrderWithItems> {
+  async getOrderById(orderId: number, currentUser: AuthenticatedUser): Promise<OrderResponseDto> {
     // Сначала просто ищем заказ по ID
     const orderArray = await this.drizzle.select().from(orders).where(eq(orders.id, orderId)).limit(1)
 
@@ -236,11 +249,12 @@ export class OrdersService {
 
     const items = await this.drizzle.select().from(orderItems).where(eq(orderItems.orderId, orderId))
 
-    return { ...order, items }
+    // Просто возвращаем смапленный DTO одного заказа
+    return toOrderResponseDto({ ...order, items })
   }
 
-  async cancelOrder(orderId: number, currentUser: AuthenticatedUser): Promise<OrderWithItems> {
-    return this.drizzle.transaction(async (tx) => {
+  async cancelOrder(orderId: number, currentUser: AuthenticatedUser): Promise<OrderResponseDto> {
+    const cancelledOrderWithItems = await this.drizzle.transaction(async (tx) => {
       // При отмене заказа, права проверяются строже: только владелец заказа
       // (или админ, если такая логика будет добавлена сюда позже, сейчас только владелец)
       const orderToCancelArray = await tx
@@ -297,9 +311,10 @@ export class OrdersService {
       const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, updatedOrder.id))
       return { ...updatedOrder, items }
     })
+    return toOrderResponseDto(cancelledOrderWithItems)
   }
 
-  async findAllOrders(queryDto: FindAllOrdersQueryDto): Promise<PaginatedOrdersResponse> {
+  async findAllOrders(queryDto: FindAllOrdersQueryDto): Promise<PaginatedOrderResponseDto> {
     const { page = 1, limit = 10, userId, status, sortBy = '-createdAt' } = queryDto
     const offset = (page - 1) * limit
 
@@ -363,15 +378,16 @@ export class OrdersService {
       .where(whereCondition)
 
     const total = totalResult[0].count
+    const meta: PaginationMetaDto = {
+      total,
+      page,
+      limit,
+      lastPage: Math.ceil(total / limit) || 1 // Гарантируем, что lastPage всегда будет как минимум 1
+    }
 
     return {
-      data: ordersWithItems,
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit)
-      }
+      data: ordersWithItems.map(toOrderResponseDto),
+      meta
     }
   }
 }

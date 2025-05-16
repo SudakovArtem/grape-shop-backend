@@ -76,6 +76,19 @@ export class UsersController {
     return this.usersService.login(loginUserDto)
   }
 
+  @Post('admin/login')
+  @ApiOperation({ summary: 'Вход администратора и получение JWT токена' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Успешный вход, получен токен.', type: LoginResponseDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Неверный email или пароль.' })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Доступ запрещен. У пользователя нет прав администратора.'
+  })
+  @HttpCode(HttpStatus.OK)
+  async adminLogin(@Body() loginUserDto: LoginUserDto): Promise<LoginResponseDto> {
+    return await this.usersService.adminLogin(loginUserDto)
+  }
+
   @Post('forgot-password')
   @ApiOperation({ summary: 'Запрос на сброс пароля' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Запрос на сброс пароля отправлен.', type: MessageResponseDto })

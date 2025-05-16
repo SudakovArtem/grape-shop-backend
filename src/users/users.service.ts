@@ -99,10 +99,12 @@ export class UsersService {
     return newUser
   }
 
-  async login(loginUserDto: LoginUserDto): Promise<{ accessToken: string }> {
+  private async _authenticateAndGenerateToken(
+    loginUserDto: LoginUserDto,
+    requiredRole?: string
+  ): Promise<{ accessToken: string }> {
     const { email, password } = loginUserDto
 
-    // Извлекаем все поля пользователя, включая роль
     const userResult = await this.drizzle.select().from(users).where(eq(users.email, email)).limit(1)
 
     if (userResult.length === 0) {
@@ -116,13 +118,24 @@ export class UsersService {
       throw new UnauthorizedException('Неверный email или пароль')
     }
 
-    // Добавляем роль в payload токена
+    if (requiredRole && foundUser.role !== requiredRole) {
+      throw new ForbiddenException('Доступ запрещен. У пользователя нет достаточных прав.')
+    }
+
     const payload = { email: foundUser.email, sub: foundUser.id, role: foundUser.role }
     const accessToken = this.jwtService.sign(payload)
 
     return {
       accessToken
     }
+  }
+
+  async login(loginUserDto: LoginUserDto): Promise<{ accessToken: string }> {
+    return this._authenticateAndGenerateToken(loginUserDto)
+  }
+
+  async adminLogin(loginUserDto: LoginUserDto): Promise<{ accessToken: string }> {
+    return this._authenticateAndGenerateToken(loginUserDto, 'admin')
   }
 
   async getProfile(userId: number): Promise<SafeUser> {

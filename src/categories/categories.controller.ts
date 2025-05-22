@@ -45,7 +45,7 @@ export class CategoriesController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Список всех категорий.',
-    type: [CategoryResponseDto],
+    type: CategoryResponseDto,
     isArray: true
   })
   findAll() {

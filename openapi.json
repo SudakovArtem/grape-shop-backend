@@ -1,0 +1,4513 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/users": {
+      "get": {
+        "operationId": "UsersController_findAllUsers",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Номер страницы",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Количество элементов на странице",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "email",
+            "required": false,
+            "in": "query",
+            "description": "Часть email для поиска (регистронезависимый)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Поле и направление сортировки. Допустимые значения: \"createdAt\" (по возрастанию), \"-createdAt\" (по убыванию).",
+            "schema": {
+              "default": "-createdAt",
+              "example": "-createdAt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список пользователей с пагинацией",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "description": "Список пользователей",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID пользователя"
+                          },
+                          "email": {
+                            "type": "string",
+                            "description": "Email пользователя",
+                            "example": "user@example.com"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Имя пользователя",
+                            "example": "Иван Иванов",
+                            "nullable": true
+                          },
+                          "address": {
+                            "type": "string",
+                            "description": "Адрес пользователя",
+                            "example": "ул. Примерная, д.1",
+                            "nullable": true
+                          },
+                          "phone": {
+                            "type": "string",
+                            "description": "Телефон пользователя",
+                            "example": "+79001234567",
+                            "nullable": true
+                          },
+                          "avatar": {
+                            "type": "string",
+                            "description": "URL аватара пользователя",
+                            "nullable": true,
+                            "example": "https://example.com/avatar.jpg"
+                          },
+                          "role": {
+                            "type": "string",
+                            "description": "Роль пользователя",
+                            "enum": [
+                              "user",
+                              "admin"
+                            ],
+                            "example": "user"
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string",
+                            "description": "Дата регистрации пользователя",
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "email",
+                          "role",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "meta": {
+                      "description": "Метаданные пагинации",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "number",
+                              "description": "Общее количество элементов"
+                            },
+                            "page": {
+                              "type": "number",
+                              "description": "Текущая страница"
+                            },
+                            "limit": {
+                              "type": "number",
+                              "description": "Количество элементов на странице"
+                            },
+                            "lastPage": {
+                              "type": "number",
+                              "description": "Последняя страница"
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "page",
+                            "limit",
+                            "lastPage"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Получить всех пользователей (только для администраторов)",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/register": {
+      "post": {
+        "operationId": "UsersController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com",
+                    "description": "Email пользователя"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123",
+                    "description": "Пароль (минимум 6 символов)"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Иван Иванов",
+                    "description": "Имя пользователя"
+                  },
+                  "address": {
+                    "type": "string",
+                    "example": "ул. Примерная, д. 1, кв. 2",
+                    "description": "Адрес доставки"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+79001234567",
+                    "description": "Номер телефона"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Пользователь успешно зарегистрирован.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID пользователя"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "Email пользователя",
+                      "example": "user@example.com"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Имя пользователя",
+                      "example": "Иван Иванов",
+                      "nullable": true
+                    },
+                    "address": {
+                      "type": "string",
+                      "description": "Адрес пользователя",
+                      "example": "ул. Примерная, д.1",
+                      "nullable": true
+                    },
+                    "phone": {
+                      "type": "string",
+                      "description": "Телефон пользователя",
+                      "example": "+79001234567",
+                      "nullable": true
+                    },
+                    "avatar": {
+                      "type": "string",
+                      "description": "URL аватара пользователя",
+                      "nullable": true,
+                      "example": "https://example.com/avatar.jpg"
+                    },
+                    "role": {
+                      "type": "string",
+                      "description": "Роль пользователя",
+                      "enum": [
+                        "user",
+                        "admin"
+                      ],
+                      "example": "user"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата регистрации пользователя",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "role",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для регистрации."
+          },
+          "409": {
+            "description": "Пользователь с таким email уже существует."
+          }
+        },
+        "summary": "Регистрация нового пользователя",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/login": {
+      "post": {
+        "operationId": "UsersController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com",
+                    "description": "Email пользователя для входа"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123",
+                    "description": "Пароль пользователя для входа"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Успешный вход, получен токен.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string",
+                      "description": "JWT токен доступа",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                  },
+                  "required": [
+                    "accessToken"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Неверный email или пароль."
+          }
+        },
+        "summary": "Вход пользователя и получение JWT токена",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/admin/login": {
+      "post": {
+        "operationId": "UsersController_adminLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com",
+                    "description": "Email пользователя для входа"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123",
+                    "description": "Пароль пользователя для входа"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Успешный вход, получен токен.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string",
+                      "description": "JWT токен доступа",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                  },
+                  "required": [
+                    "accessToken"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Неверный email или пароль."
+          },
+          "403": {
+            "description": "Доступ запрещен. У пользователя нет прав администратора."
+          }
+        },
+        "summary": "Вход администратора и получение JWT токена",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/forgot-password": {
+      "post": {
+        "operationId": "UsersController_forgotPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com",
+                    "description": "Email пользователя для сброса пароля"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Запрос на сброс пароля отправлен.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Сообщение от сервера",
+                      "example": "Операция успешно выполнена."
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Запрос на сброс пароля",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/reset-password": {
+      "post": {
+        "operationId": "UsersController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Токен для сброса пароля, полученный по email"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "example": "newSecurePassword123",
+                    "description": "Новый пароль (минимум 8 символов)"
+                  }
+                },
+                "required": [
+                  "token",
+                  "newPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Пароль успешно сброшен.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Сообщение от сервера",
+                      "example": "Операция успешно выполнена."
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Токен недействителен или истек."
+          }
+        },
+        "summary": "Сброс пароля с использованием токена",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/profile": {
+      "get": {
+        "operationId": "UsersController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Профиль текущего пользователя.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID аутентифицированного пользователя"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "Email аутентифицированного пользователя",
+                      "example": "user@example.com"
+                    },
+                    "role": {
+                      "type": "string",
+                      "description": "Роль аутентифицированного пользователя",
+                      "enum": [
+                        "user",
+                        "admin"
+                      ],
+                      "example": "user"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "role"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Получить профиль текущего пользователя",
+        "tags": [
+          "Users"
+        ]
+      },
+      "put": {
+        "operationId": "UsersController_updateProfile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Иван Иванов",
+                    "description": "Имя пользователя"
+                  },
+                  "address": {
+                    "type": "string",
+                    "example": "ул. Примерная, д. 1, кв. 2",
+                    "description": "Адрес доставки"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+79001234567",
+                    "description": "Номер телефона"
+                  },
+                  "avatar": {
+                    "type": "string",
+                    "description": "URL аватара пользователя. Должен быть валидным URL изображения, полученным через эндпоинт /uploads.",
+                    "example": "https://storage.yandexcloud.net/your-bucket/user-uploads/avatar.jpg"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Профиль успешно обновлен.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID пользователя"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "Email пользователя",
+                      "example": "user@example.com"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Имя пользователя",
+                      "example": "Иван Иванов",
+                      "nullable": true
+                    },
+                    "address": {
+                      "type": "string",
+                      "description": "Адрес пользователя",
+                      "example": "ул. Примерная, д.1",
+                      "nullable": true
+                    },
+                    "phone": {
+                      "type": "string",
+                      "description": "Телефон пользователя",
+                      "example": "+79001234567",
+                      "nullable": true
+                    },
+                    "avatar": {
+                      "type": "string",
+                      "description": "URL аватара пользователя",
+                      "nullable": true,
+                      "example": "https://example.com/avatar.jpg"
+                    },
+                    "role": {
+                      "type": "string",
+                      "description": "Роль пользователя",
+                      "enum": [
+                        "user",
+                        "admin"
+                      ],
+                      "example": "user"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата регистрации пользователя",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "role",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для обновления."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Обновить профиль текущего пользователя",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "UsersController_findUserById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Информация о пользователе.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID пользователя"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "Email пользователя",
+                      "example": "user@example.com"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Имя пользователя",
+                      "example": "Иван Иванов",
+                      "nullable": true
+                    },
+                    "address": {
+                      "type": "string",
+                      "description": "Адрес пользователя",
+                      "example": "ул. Примерная, д.1",
+                      "nullable": true
+                    },
+                    "phone": {
+                      "type": "string",
+                      "description": "Телефон пользователя",
+                      "example": "+79001234567",
+                      "nullable": true
+                    },
+                    "avatar": {
+                      "type": "string",
+                      "description": "URL аватара пользователя",
+                      "nullable": true,
+                      "example": "https://example.com/avatar.jpg"
+                    },
+                    "role": {
+                      "type": "string",
+                      "description": "Роль пользователя",
+                      "enum": [
+                        "user",
+                        "admin"
+                      ],
+                      "example": "user"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата регистрации пользователя",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "role",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Доступ запрещен."
+          },
+          "404": {
+            "description": "Пользователь не найден."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Получить информацию о пользователе по ID (только для администраторов)",
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_deleteUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Пользователь успешно удален."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Нет прав на удаление этого пользователя."
+          },
+          "404": {
+            "description": "Пользователь не найден."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Удалить пользователя (доступно самому пользователю или администратору)",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/products": {
+      "post": {
+        "operationId": "ProductsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Название продукта",
+                    "example": "Виноград Кишмиш"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Описание продукта",
+                    "example": "Сладкий сорт без косточек"
+                  },
+                  "cuttingPrice": {
+                    "type": "number",
+                    "description": "Цена за черенок (если применимо)",
+                    "example": 150.5
+                  },
+                  "seedlingPrice": {
+                    "type": "number",
+                    "description": "Цена за саженец (если применимо)",
+                    "example": 300
+                  },
+                  "categoryId": {
+                    "type": "number",
+                    "description": "ID категории",
+                    "example": 1
+                  },
+                  "variety": {
+                    "type": "string",
+                    "description": "Сорт (дублирует name для ТЗ)",
+                    "example": "Кишмиш"
+                  },
+                  "maturationPeriod": {
+                    "type": "string",
+                    "description": "Срок созревания",
+                    "example": "Ранний"
+                  },
+                  "berryShape": {
+                    "type": "string",
+                    "description": "Форма ягоды",
+                    "example": "Овальная"
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "Цвет ягоды",
+                    "example": "Зеленый"
+                  },
+                  "taste": {
+                    "type": "string",
+                    "description": "Вкус",
+                    "example": "Сладкий"
+                  },
+                  "inStock": {
+                    "type": "boolean",
+                    "description": "В наличии",
+                    "default": true
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Продукт успешно создан.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID продукта"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название продукта"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Описание продукта",
+                      "nullable": true
+                    },
+                    "cuttingPrice": {
+                      "type": "number",
+                      "description": "Цена за черенок",
+                      "nullable": true
+                    },
+                    "seedlingPrice": {
+                      "type": "number",
+                      "description": "Цена за саженец",
+                      "nullable": true
+                    },
+                    "categoryId": {
+                      "type": "number",
+                      "description": "ID категории",
+                      "nullable": true
+                    },
+                    "categoryName": {
+                      "type": "string",
+                      "description": "Название категории",
+                      "nullable": true
+                    },
+                    "variety": {
+                      "type": "string",
+                      "description": "Сорт",
+                      "nullable": true
+                    },
+                    "maturationPeriod": {
+                      "type": "string",
+                      "description": "Срок созревания",
+                      "nullable": true
+                    },
+                    "berryShape": {
+                      "type": "string",
+                      "description": "Форма ягоды",
+                      "nullable": true
+                    },
+                    "color": {
+                      "type": "string",
+                      "description": "Цвет ягоды",
+                      "nullable": true
+                    },
+                    "taste": {
+                      "type": "string",
+                      "description": "Вкус",
+                      "nullable": true
+                    },
+                    "inStock": {
+                      "type": "boolean",
+                      "description": "В наличии",
+                      "default": true,
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания"
+                    },
+                    "updatedAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата обновления"
+                    },
+                    "images": {
+                      "description": "Список изображений продукта",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID изображения"
+                          },
+                          "url": {
+                            "type": "string",
+                            "description": "URL изображения"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "url"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для создания продукта."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Создать новый продукт (только для администраторов)",
+        "tags": [
+          "Products"
+        ]
+      },
+      "get": {
+        "operationId": "ProductsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Номер страницы",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Количество элементов на странице",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "ID категории",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "minPrice",
+            "required": false,
+            "in": "query",
+            "description": "Минимальная цена",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "required": false,
+            "in": "query",
+            "description": "Максимальная цена",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "variety",
+            "required": false,
+            "in": "query",
+            "description": "Сорт",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "maturationPeriod",
+            "required": false,
+            "in": "query",
+            "description": "Срок созревания",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Ран.",
+                "Ультр.",
+                "Ср.",
+                "Поздн."
+              ]
+            }
+          },
+          {
+            "name": "berryShape",
+            "required": false,
+            "in": "query",
+            "description": "Форма ягоды",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Пальч.",
+                "Овал.",
+                "Кругл."
+              ]
+            }
+          },
+          {
+            "name": "color",
+            "required": false,
+            "in": "query",
+            "description": "Цвет",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Желт.",
+                "Красн.",
+                "Син.",
+                "Розов."
+              ]
+            }
+          },
+          {
+            "name": "taste",
+            "required": false,
+            "in": "query",
+            "description": "Вкус",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Гарм.",
+                "Муск.",
+                "Прост."
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Поисковый запрос",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Поле для сортировки",
+            "schema": {
+              "default": "createdAt_desc",
+              "type": "string",
+              "enum": [
+                "createdAt_desc",
+                "createdAt_asc",
+                "name_asc",
+                "name_desc",
+                "price_asc",
+                "price_desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список продуктов с пагинацией.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "description": "Список продуктов",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID продукта"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Название продукта"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Описание продукта",
+                            "nullable": true
+                          },
+                          "cuttingPrice": {
+                            "type": "number",
+                            "description": "Цена за черенок",
+                            "nullable": true
+                          },
+                          "seedlingPrice": {
+                            "type": "number",
+                            "description": "Цена за саженец",
+                            "nullable": true
+                          },
+                          "categoryId": {
+                            "type": "number",
+                            "description": "ID категории",
+                            "nullable": true
+                          },
+                          "categoryName": {
+                            "type": "string",
+                            "description": "Название категории",
+                            "nullable": true
+                          },
+                          "variety": {
+                            "type": "string",
+                            "description": "Сорт",
+                            "nullable": true
+                          },
+                          "maturationPeriod": {
+                            "type": "string",
+                            "description": "Срок созревания",
+                            "nullable": true
+                          },
+                          "berryShape": {
+                            "type": "string",
+                            "description": "Форма ягоды",
+                            "nullable": true
+                          },
+                          "color": {
+                            "type": "string",
+                            "description": "Цвет ягоды",
+                            "nullable": true
+                          },
+                          "taste": {
+                            "type": "string",
+                            "description": "Вкус",
+                            "nullable": true
+                          },
+                          "inStock": {
+                            "type": "boolean",
+                            "description": "В наличии",
+                            "default": true,
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string",
+                            "description": "Дата создания"
+                          },
+                          "updatedAt": {
+                            "format": "date-time",
+                            "type": "string",
+                            "description": "Дата обновления"
+                          },
+                          "images": {
+                            "description": "Список изображений продукта",
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "number",
+                                  "description": "ID изображения"
+                                },
+                                "url": {
+                                  "type": "string",
+                                  "description": "URL изображения"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "url"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "createdAt",
+                          "updatedAt"
+                        ]
+                      }
+                    },
+                    "meta": {
+                      "description": "Метаданные пагинации",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "number",
+                              "description": "Общее количество элементов"
+                            },
+                            "page": {
+                              "type": "number",
+                              "description": "Текущая страница"
+                            },
+                            "limit": {
+                              "type": "number",
+                              "description": "Количество элементов на странице"
+                            },
+                            "lastPage": {
+                              "type": "number",
+                              "description": "Последняя страница"
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "page",
+                            "limit",
+                            "lastPage"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Получить список всех продуктов с фильтрацией и пагинацией",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "operationId": "ProductsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Продукт найден.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID продукта"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название продукта"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Описание продукта",
+                      "nullable": true
+                    },
+                    "cuttingPrice": {
+                      "type": "number",
+                      "description": "Цена за черенок",
+                      "nullable": true
+                    },
+                    "seedlingPrice": {
+                      "type": "number",
+                      "description": "Цена за саженец",
+                      "nullable": true
+                    },
+                    "categoryId": {
+                      "type": "number",
+                      "description": "ID категории",
+                      "nullable": true
+                    },
+                    "categoryName": {
+                      "type": "string",
+                      "description": "Название категории",
+                      "nullable": true
+                    },
+                    "variety": {
+                      "type": "string",
+                      "description": "Сорт",
+                      "nullable": true
+                    },
+                    "maturationPeriod": {
+                      "type": "string",
+                      "description": "Срок созревания",
+                      "nullable": true
+                    },
+                    "berryShape": {
+                      "type": "string",
+                      "description": "Форма ягоды",
+                      "nullable": true
+                    },
+                    "color": {
+                      "type": "string",
+                      "description": "Цвет ягоды",
+                      "nullable": true
+                    },
+                    "taste": {
+                      "type": "string",
+                      "description": "Вкус",
+                      "nullable": true
+                    },
+                    "inStock": {
+                      "type": "boolean",
+                      "description": "В наличии",
+                      "default": true,
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания"
+                    },
+                    "updatedAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата обновления"
+                    },
+                    "images": {
+                      "description": "Список изображений продукта",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID изображения"
+                          },
+                          "url": {
+                            "type": "string",
+                            "description": "URL изображения"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "url"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Продукт с таким ID не найден."
+          }
+        },
+        "summary": "Получить продукт по ID",
+        "tags": [
+          "Products"
+        ]
+      },
+      "put": {
+        "operationId": "ProductsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Продукт успешно обновлен.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID продукта"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название продукта"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Описание продукта",
+                      "nullable": true
+                    },
+                    "cuttingPrice": {
+                      "type": "number",
+                      "description": "Цена за черенок",
+                      "nullable": true
+                    },
+                    "seedlingPrice": {
+                      "type": "number",
+                      "description": "Цена за саженец",
+                      "nullable": true
+                    },
+                    "categoryId": {
+                      "type": "number",
+                      "description": "ID категории",
+                      "nullable": true
+                    },
+                    "categoryName": {
+                      "type": "string",
+                      "description": "Название категории",
+                      "nullable": true
+                    },
+                    "variety": {
+                      "type": "string",
+                      "description": "Сорт",
+                      "nullable": true
+                    },
+                    "maturationPeriod": {
+                      "type": "string",
+                      "description": "Срок созревания",
+                      "nullable": true
+                    },
+                    "berryShape": {
+                      "type": "string",
+                      "description": "Форма ягоды",
+                      "nullable": true
+                    },
+                    "color": {
+                      "type": "string",
+                      "description": "Цвет ягоды",
+                      "nullable": true
+                    },
+                    "taste": {
+                      "type": "string",
+                      "description": "Вкус",
+                      "nullable": true
+                    },
+                    "inStock": {
+                      "type": "boolean",
+                      "description": "В наличии",
+                      "default": true,
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания"
+                    },
+                    "updatedAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата обновления"
+                    },
+                    "images": {
+                      "description": "Список изображений продукта",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID изображения"
+                          },
+                          "url": {
+                            "type": "string",
+                            "description": "URL изображения"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "url"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для обновления продукта."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "404": {
+            "description": "Продукт с таким ID не найден."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Обновить продукт по ID (только для администраторов)",
+        "tags": [
+          "Products"
+        ]
+      },
+      "delete": {
+        "operationId": "ProductsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Продукт успешно удален."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "404": {
+            "description": "Продукт с таким ID не найден."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Удалить продукт по ID (только для администраторов)",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/products/{productId}/images": {
+      "post": {
+        "operationId": "ProductsController_addProductImage",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "isPrimary",
+            "required": false,
+            "in": "query",
+            "description": "Сделать это изображение основным?",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "imageFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Файл изображения продукта (jpg, jpeg, png, gif, до 5MB)"
+                  }
+                },
+                "required": [
+                  "imageFile"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Изображение успешно добавлено к продукту.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID продукта"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название продукта"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Описание продукта",
+                      "nullable": true
+                    },
+                    "cuttingPrice": {
+                      "type": "number",
+                      "description": "Цена за черенок",
+                      "nullable": true
+                    },
+                    "seedlingPrice": {
+                      "type": "number",
+                      "description": "Цена за саженец",
+                      "nullable": true
+                    },
+                    "categoryId": {
+                      "type": "number",
+                      "description": "ID категории",
+                      "nullable": true
+                    },
+                    "categoryName": {
+                      "type": "string",
+                      "description": "Название категории",
+                      "nullable": true
+                    },
+                    "variety": {
+                      "type": "string",
+                      "description": "Сорт",
+                      "nullable": true
+                    },
+                    "maturationPeriod": {
+                      "type": "string",
+                      "description": "Срок созревания",
+                      "nullable": true
+                    },
+                    "berryShape": {
+                      "type": "string",
+                      "description": "Форма ягоды",
+                      "nullable": true
+                    },
+                    "color": {
+                      "type": "string",
+                      "description": "Цвет ягоды",
+                      "nullable": true
+                    },
+                    "taste": {
+                      "type": "string",
+                      "description": "Вкус",
+                      "nullable": true
+                    },
+                    "inStock": {
+                      "type": "boolean",
+                      "description": "В наличии",
+                      "default": true,
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания"
+                    },
+                    "updatedAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата обновления"
+                    },
+                    "images": {
+                      "description": "Список изображений продукта",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID изображения"
+                          },
+                          "url": {
+                            "type": "string",
+                            "description": "URL изображения"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "url"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ошибка при загрузке файла или неверный ID продукта."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Добавить изображение к продукту (только для администраторов)",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/products/{productId}/images/{imageId}": {
+      "delete": {
+        "operationId": "ProductsController_removeProductImage",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Изображение успешно удалено."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "404": {
+            "description": "Продукт или изображение не найдено."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Удалить изображение продукта (только для администраторов)",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/cart": {
+      "post": {
+        "operationId": "CartsController_addItem",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productId": {
+                    "type": "number",
+                    "description": "ID продукта для добавления в корзину",
+                    "example": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Тип товара (черенок или саженец)",
+                    "enum": [
+                      "cutting",
+                      "seedling"
+                    ],
+                    "example": "seedling"
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "description": "Количество товара",
+                    "default": 1,
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "productId",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Товар успешно добавлен/обновлен в корзине.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID элемента корзины"
+                    },
+                    "userId": {
+                      "type": "number",
+                      "description": "ID пользователя"
+                    },
+                    "productId": {
+                      "type": "number",
+                      "description": "ID продукта"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Тип товара (черенок или саженец)",
+                      "enum": [
+                        "cutting",
+                        "seedling"
+                      ]
+                    },
+                    "quantity": {
+                      "type": "number",
+                      "description": "Количество товара"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "productId",
+                    "type",
+                    "quantity"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для добавления/обновления товара."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "404": {
+            "description": "Продукт не найден."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Добавить товар в корзину или обновить количество существующего",
+        "tags": [
+          "Cart"
+        ]
+      },
+      "get": {
+        "operationId": "CartsController_getCart",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Содержимое корзины.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Список товаров в корзине",
+                      "items": {
+                        "type": "array"
+                      },
+                      "type": "array"
+                    },
+                    "totalCartPrice": {
+                      "type": "number",
+                      "description": "Общая стоимость всех товаров в корзине"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "totalCartPrice"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Получить содержимое корзины пользователя",
+        "tags": [
+          "Cart"
+        ]
+      }
+    },
+    "/cart/{itemId}": {
+      "put": {
+        "operationId": "CartsController_updateItemQuantity",
+        "parameters": [
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "number",
+                    "description": "Новое количество товара в корзине",
+                    "minimum": 1,
+                    "example": 2
+                  }
+                },
+                "required": [
+                  "quantity"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Количество товара успешно обновлено.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID элемента корзины"
+                    },
+                    "userId": {
+                      "type": "number",
+                      "description": "ID пользователя"
+                    },
+                    "productId": {
+                      "type": "number",
+                      "description": "ID продукта"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Тип товара (черенок или саженец)",
+                      "enum": [
+                        "cutting",
+                        "seedling"
+                      ]
+                    },
+                    "quantity": {
+                      "type": "number",
+                      "description": "Количество товара"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "productId",
+                    "type",
+                    "quantity"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для обновления (например, quantity < 1)."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Попытка изменить чужой элемент корзины."
+          },
+          "404": {
+            "description": "Элемент корзины не найден."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Обновить количество конкретного товара в корзине",
+        "tags": [
+          "Cart"
+        ]
+      },
+      "delete": {
+        "operationId": "CartsController_removeItem",
+        "parameters": [
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Товар успешно удален из корзины."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Попытка удалить чужой элемент корзины."
+          },
+          "404": {
+            "description": "Элемент корзины не найден."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Удалить товар из корзины",
+        "tags": [
+          "Cart"
+        ]
+      }
+    },
+    "/orders/all": {
+      "get": {
+        "operationId": "OrdersController_getAllOrders",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Номер страницы",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Количество заказов на странице",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "ID пользователя для фильтрации заказов",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Фильтр по статусу заказа",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Создан",
+                "В обработке",
+                "Отправлен",
+                "Доставлен",
+                "Отменен"
+              ]
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Поле и направление сортировки. Допустимые значения: \"createdAt\" (по возрастанию), \"-createdAt\" (по убыванию).",
+            "schema": {
+              "default": "-createdAt",
+              "example": "-createdAt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список всех заказов с пагинацией.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "description": "Массив заказов для текущей страницы",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID заказа"
+                          },
+                          "userId": {
+                            "type": "number",
+                            "description": "ID пользователя, оформившего заказ"
+                          },
+                          "totalPrice": {
+                            "type": "string",
+                            "description": "Общая стоимость заказа (строка)",
+                            "example": "300.50"
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Текущий статус заказа",
+                            "enum": [
+                              "Создан",
+                              "В обработке",
+                              "Отправлен",
+                              "Доставлен",
+                              "Отменен"
+                            ],
+                            "example": "Создан"
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string",
+                            "description": "Дата и время создания заказа",
+                            "nullable": true
+                          },
+                          "items": {
+                            "description": "Список позиций в заказе",
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "number",
+                                  "description": "ID позиции в заказе"
+                                },
+                                "orderId": {
+                                  "type": "number",
+                                  "description": "ID заказа, к которому относится позиция"
+                                },
+                                "productId": {
+                                  "type": "number",
+                                  "description": "ID заказанного продукта"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "description": "Тип товара (черенок или саженец)",
+                                  "enum": [
+                                    "cutting",
+                                    "seedling"
+                                  ]
+                                },
+                                "quantity": {
+                                  "type": "number",
+                                  "description": "Количество товара в данной позиции"
+                                },
+                                "price": {
+                                  "type": "string",
+                                  "description": "Цена за единицу товара на момент заказа (строка)",
+                                  "example": "150.00"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "orderId",
+                                "productId",
+                                "type",
+                                "quantity",
+                                "price"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "userId",
+                          "totalPrice",
+                          "status",
+                          "createdAt",
+                          "items"
+                        ]
+                      }
+                    },
+                    "meta": {
+                      "description": "Метаданные пагинации",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "number",
+                              "description": "Общее количество элементов"
+                            },
+                            "page": {
+                              "type": "number",
+                              "description": "Текущая страница"
+                            },
+                            "limit": {
+                              "type": "number",
+                              "description": "Количество элементов на странице"
+                            },
+                            "lastPage": {
+                              "type": "number",
+                              "description": "Последняя страница"
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "page",
+                            "limit",
+                            "lastPage"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Получить все заказы (только для администраторов)",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/orders": {
+      "post": {
+        "operationId": "OrdersController_createOrder",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Заказ успешно создан.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID заказа"
+                    },
+                    "userId": {
+                      "type": "number",
+                      "description": "ID пользователя, оформившего заказ"
+                    },
+                    "totalPrice": {
+                      "type": "string",
+                      "description": "Общая стоимость заказа (строка)",
+                      "example": "300.50"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Текущий статус заказа",
+                      "enum": [
+                        "Создан",
+                        "В обработке",
+                        "Отправлен",
+                        "Доставлен",
+                        "Отменен"
+                      ],
+                      "example": "Создан"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата и время создания заказа",
+                      "nullable": true
+                    },
+                    "items": {
+                      "description": "Список позиций в заказе",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID позиции в заказе"
+                          },
+                          "orderId": {
+                            "type": "number",
+                            "description": "ID заказа, к которому относится позиция"
+                          },
+                          "productId": {
+                            "type": "number",
+                            "description": "ID заказанного продукта"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Тип товара (черенок или саженец)",
+                            "enum": [
+                              "cutting",
+                              "seedling"
+                            ]
+                          },
+                          "quantity": {
+                            "type": "number",
+                            "description": "Количество товара в данной позиции"
+                          },
+                          "price": {
+                            "type": "string",
+                            "description": "Цена за единицу товара на момент заказа (строка)",
+                            "example": "150.00"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "orderId",
+                          "productId",
+                          "type",
+                          "quantity",
+                          "price"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "totalPrice",
+                    "status",
+                    "createdAt",
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Корзина пуста или ошибка при создании заказа."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Создать новый заказ из корзины текущего пользователя",
+        "tags": [
+          "Orders"
+        ]
+      },
+      "get": {
+        "operationId": "OrdersController_getOrders",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Номер страницы",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Количество заказов на странице",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Фильтр по статусу заказа",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Создан",
+                "В обработке",
+                "Отправлен",
+                "Доставлен",
+                "Отменен"
+              ]
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Поле и направление сортировки. Допустимые значения: \"createdAt\" (по возрастанию), \"-createdAt\" (по убыванию).",
+            "schema": {
+              "default": "-createdAt",
+              "example": "-createdAt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список заказов пользователя с пагинацией.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "description": "Массив заказов для текущей страницы",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID заказа"
+                          },
+                          "userId": {
+                            "type": "number",
+                            "description": "ID пользователя, оформившего заказ"
+                          },
+                          "totalPrice": {
+                            "type": "string",
+                            "description": "Общая стоимость заказа (строка)",
+                            "example": "300.50"
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Текущий статус заказа",
+                            "enum": [
+                              "Создан",
+                              "В обработке",
+                              "Отправлен",
+                              "Доставлен",
+                              "Отменен"
+                            ],
+                            "example": "Создан"
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string",
+                            "description": "Дата и время создания заказа",
+                            "nullable": true
+                          },
+                          "items": {
+                            "description": "Список позиций в заказе",
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "number",
+                                  "description": "ID позиции в заказе"
+                                },
+                                "orderId": {
+                                  "type": "number",
+                                  "description": "ID заказа, к которому относится позиция"
+                                },
+                                "productId": {
+                                  "type": "number",
+                                  "description": "ID заказанного продукта"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "description": "Тип товара (черенок или саженец)",
+                                  "enum": [
+                                    "cutting",
+                                    "seedling"
+                                  ]
+                                },
+                                "quantity": {
+                                  "type": "number",
+                                  "description": "Количество товара в данной позиции"
+                                },
+                                "price": {
+                                  "type": "string",
+                                  "description": "Цена за единицу товара на момент заказа (строка)",
+                                  "example": "150.00"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "orderId",
+                                "productId",
+                                "type",
+                                "quantity",
+                                "price"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "userId",
+                          "totalPrice",
+                          "status",
+                          "createdAt",
+                          "items"
+                        ]
+                      }
+                    },
+                    "meta": {
+                      "description": "Метаданные пагинации",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "number",
+                              "description": "Общее количество элементов"
+                            },
+                            "page": {
+                              "type": "number",
+                              "description": "Текущая страница"
+                            },
+                            "limit": {
+                              "type": "number",
+                              "description": "Количество элементов на странице"
+                            },
+                            "lastPage": {
+                              "type": "number",
+                              "description": "Последняя страница"
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "page",
+                            "limit",
+                            "lastPage"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Получить список заказов текущего пользователя",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "operationId": "OrdersController_getOrderById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Детали заказа.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID заказа"
+                    },
+                    "userId": {
+                      "type": "number",
+                      "description": "ID пользователя, оформившего заказ"
+                    },
+                    "totalPrice": {
+                      "type": "string",
+                      "description": "Общая стоимость заказа (строка)",
+                      "example": "300.50"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Текущий статус заказа",
+                      "enum": [
+                        "Создан",
+                        "В обработке",
+                        "Отправлен",
+                        "Доставлен",
+                        "Отменен"
+                      ],
+                      "example": "Создан"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата и время создания заказа",
+                      "nullable": true
+                    },
+                    "items": {
+                      "description": "Список позиций в заказе",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID позиции в заказе"
+                          },
+                          "orderId": {
+                            "type": "number",
+                            "description": "ID заказа, к которому относится позиция"
+                          },
+                          "productId": {
+                            "type": "number",
+                            "description": "ID заказанного продукта"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Тип товара (черенок или саженец)",
+                            "enum": [
+                              "cutting",
+                              "seedling"
+                            ]
+                          },
+                          "quantity": {
+                            "type": "number",
+                            "description": "Количество товара в данной позиции"
+                          },
+                          "price": {
+                            "type": "string",
+                            "description": "Цена за единицу товара на момент заказа (строка)",
+                            "example": "150.00"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "orderId",
+                          "productId",
+                          "type",
+                          "quantity",
+                          "price"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "totalPrice",
+                    "status",
+                    "createdAt",
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Попытка доступа к чужому заказу (не админ)."
+          },
+          "404": {
+            "description": "Заказ не найден или не принадлежит пользователю (если не админ)."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Получить детали конкретного заказа",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/orders/{id}/cancel": {
+      "post": {
+        "operationId": "OrdersController_cancelOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Заказ успешно отменен.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID заказа"
+                    },
+                    "userId": {
+                      "type": "number",
+                      "description": "ID пользователя, оформившего заказ"
+                    },
+                    "totalPrice": {
+                      "type": "string",
+                      "description": "Общая стоимость заказа (строка)",
+                      "example": "300.50"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Текущий статус заказа",
+                      "enum": [
+                        "Создан",
+                        "В обработке",
+                        "Отправлен",
+                        "Доставлен",
+                        "Отменен"
+                      ],
+                      "example": "Создан"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата и время создания заказа",
+                      "nullable": true
+                    },
+                    "items": {
+                      "description": "Список позиций в заказе",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID позиции в заказе"
+                          },
+                          "orderId": {
+                            "type": "number",
+                            "description": "ID заказа, к которому относится позиция"
+                          },
+                          "productId": {
+                            "type": "number",
+                            "description": "ID заказанного продукта"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Тип товара (черенок или саженец)",
+                            "enum": [
+                              "cutting",
+                              "seedling"
+                            ]
+                          },
+                          "quantity": {
+                            "type": "number",
+                            "description": "Количество товара в данной позиции"
+                          },
+                          "price": {
+                            "type": "string",
+                            "description": "Цена за единицу товара на момент заказа (строка)",
+                            "example": "150.00"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "orderId",
+                          "productId",
+                          "type",
+                          "quantity",
+                          "price"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "totalPrice",
+                    "status",
+                    "createdAt",
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Заказ не может быть отменен (например, из-за статуса)."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Попытка отменить чужой заказ (не админ)."
+          },
+          "404": {
+            "description": "Заказ не найден или не принадлежит пользователю (если не админ)."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Отменить заказ",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/categories": {
+      "post": {
+        "operationId": "CategoriesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Название категории",
+                    "example": "Столовые сорта",
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Категория успешно создана.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID категории"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название категории"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания категории"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для создания категории."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "409": {
+            "description": "Категория с таким названием уже существует."
+          }
+        },
+        "summary": "Создать новую категорию (только для администраторов)",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "get": {
+        "operationId": "CategoriesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Список всех категорий.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number",
+                        "description": "ID категории"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Название категории"
+                      },
+                      "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "description": "Дата создания категории"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "createdAt"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Получить список всех категорий",
+        "tags": [
+          "Categories"
+        ]
+      }
+    },
+    "/categories/{id}": {
+      "get": {
+        "operationId": "CategoriesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Категория найдена.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID категории"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название категории"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания категории"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Категория с таким ID не найдена."
+          }
+        },
+        "summary": "Получить категорию по ID",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "patch": {
+        "operationId": "CategoriesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Категория успешно обновлена.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID категории"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название категории"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания категории"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для обновления категории."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "404": {
+            "description": "Категория с таким ID не найдена для обновления."
+          },
+          "409": {
+            "description": "Категория с новым названием уже существует."
+          }
+        },
+        "summary": "Обновить категорию по ID (только для администраторов)",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "delete": {
+        "operationId": "CategoriesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Категория успешно удалена."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "404": {
+            "description": "Категория с таким ID не найдена для удаления."
+          },
+          "409": {
+            "description": "Категория не может быть удалена, так как содержит продукты."
+          }
+        },
+        "summary": "Удалить категорию по ID (только для администраторов)",
+        "tags": [
+          "Categories"
+        ]
+      }
+    },
+    "/uploads": {
+      "post": {
+        "operationId": "UploadsController_uploadFile",
+        "parameters": [
+          {
+            "name": "folder",
+            "required": false,
+            "in": "query",
+            "description": "Целевая папка для загрузки файла. Если не указана, используется папка по умолчанию (например, 'common-uploads'). Допустимые символы: буквы, цифры, дефис, подчеркивание. Максимальная длина: 50 символов.",
+            "schema": {
+              "example": "avatars",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Файл для загрузки (max 5MB, типы: .png, .jpg, .jpeg, .webp)",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Файл успешно загружен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "example": "https://storage.yandexcloud.net/your-bucket/folder/image.jpg"
+                    },
+                    "fileKey": {
+                      "type": "string",
+                      "example": "folder/image.jpg"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос, файл не предоставлен, превышен размер или неверный тип файла"
+          },
+          "401": {
+            "description": "Пользователь не авторизован"
+          },
+          "500": {
+            "description": "Внутренняя ошибка сервера при загрузке файла"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Загрузить файл в указанную папку (или папку по умолчанию)",
+        "tags": [
+          "uploads"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Grape Shop API",
+    "description": "API для интернет-магазина саженцев винограда",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID пользователя"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email пользователя",
+            "example": "user@example.com"
+          },
+          "name": {
+            "type": "string",
+            "description": "Имя пользователя",
+            "example": "Иван Иванов",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "description": "Адрес пользователя",
+            "example": "ул. Примерная, д.1",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "description": "Телефон пользователя",
+            "example": "+79001234567",
+            "nullable": true
+          },
+          "avatar": {
+            "type": "string",
+            "description": "URL аватара пользователя",
+            "nullable": true,
+            "example": "https://example.com/avatar.jpg"
+          },
+          "role": {
+            "type": "string",
+            "description": "Роль пользователя",
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "example": "user"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Дата регистрации пользователя",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "createdAt"
+        ]
+      },
+      "PaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Общее количество элементов"
+          },
+          "page": {
+            "type": "number",
+            "description": "Текущая страница"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Количество элементов на странице"
+          },
+          "lastPage": {
+            "type": "number",
+            "description": "Последняя страница"
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "limit",
+          "lastPage"
+        ]
+      },
+      "PaginatedUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Список пользователей",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number",
+                  "description": "ID пользователя"
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Email пользователя",
+                  "example": "user@example.com"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Имя пользователя",
+                  "example": "Иван Иванов",
+                  "nullable": true
+                },
+                "address": {
+                  "type": "string",
+                  "description": "Адрес пользователя",
+                  "example": "ул. Примерная, д.1",
+                  "nullable": true
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Телефон пользователя",
+                  "example": "+79001234567",
+                  "nullable": true
+                },
+                "avatar": {
+                  "type": "string",
+                  "description": "URL аватара пользователя",
+                  "nullable": true,
+                  "example": "https://example.com/avatar.jpg"
+                },
+                "role": {
+                  "type": "string",
+                  "description": "Роль пользователя",
+                  "enum": [
+                    "user",
+                    "admin"
+                  ],
+                  "example": "user"
+                },
+                "createdAt": {
+                  "format": "date-time",
+                  "type": "string",
+                  "description": "Дата регистрации пользователя",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "id",
+                "email",
+                "role",
+                "createdAt"
+              ]
+            }
+          },
+          "meta": {
+            "description": "Метаданные пагинации",
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "number",
+                    "description": "Общее количество элементов"
+                  },
+                  "page": {
+                    "type": "number",
+                    "description": "Текущая страница"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Количество элементов на странице"
+                  },
+                  "lastPage": {
+                    "type": "number",
+                    "description": "Последняя страница"
+                  }
+                },
+                "required": [
+                  "total",
+                  "page",
+                  "limit",
+                  "lastPage"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com",
+            "description": "Email пользователя"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123",
+            "description": "Пароль (минимум 6 символов)"
+          },
+          "name": {
+            "type": "string",
+            "example": "Иван Иванов",
+            "description": "Имя пользователя"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Примерная, д. 1, кв. 2",
+            "description": "Адрес доставки"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+79001234567",
+            "description": "Номер телефона"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "name"
+        ]
+      },
+      "LoginUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com",
+            "description": "Email пользователя для входа"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123",
+            "description": "Пароль пользователя для входа"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT токен доступа",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "accessToken"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com",
+            "description": "Email пользователя для сброса пароля"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "MessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Сообщение от сервера",
+            "example": "Операция успешно выполнена."
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Токен для сброса пароля, полученный по email"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "newSecurePassword123",
+            "description": "Новый пароль (минимум 8 символов)"
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ]
+      },
+      "AuthenticatedUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID аутентифицированного пользователя"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email аутентифицированного пользователя",
+            "example": "user@example.com"
+          },
+          "role": {
+            "type": "string",
+            "description": "Роль аутентифицированного пользователя",
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "example": "user"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Иван Иванов",
+            "description": "Имя пользователя"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Примерная, д. 1, кв. 2",
+            "description": "Адрес доставки"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+79001234567",
+            "description": "Номер телефона"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "URL аватара пользователя. Должен быть валидным URL изображения, полученным через эндпоинт /uploads.",
+            "example": "https://storage.yandexcloud.net/your-bucket/user-uploads/avatar.jpg"
+          }
+        }
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название продукта",
+            "example": "Виноград Кишмиш"
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание продукта",
+            "example": "Сладкий сорт без косточек"
+          },
+          "cuttingPrice": {
+            "type": "number",
+            "description": "Цена за черенок (если применимо)",
+            "example": 150.5
+          },
+          "seedlingPrice": {
+            "type": "number",
+            "description": "Цена за саженец (если применимо)",
+            "example": 300
+          },
+          "categoryId": {
+            "type": "number",
+            "description": "ID категории",
+            "example": 1
+          },
+          "variety": {
+            "type": "string",
+            "description": "Сорт (дублирует name для ТЗ)",
+            "example": "Кишмиш"
+          },
+          "maturationPeriod": {
+            "type": "string",
+            "description": "Срок созревания",
+            "example": "Ранний"
+          },
+          "berryShape": {
+            "type": "string",
+            "description": "Форма ягоды",
+            "example": "Овальная"
+          },
+          "color": {
+            "type": "string",
+            "description": "Цвет ягоды",
+            "example": "Зеленый"
+          },
+          "taste": {
+            "type": "string",
+            "description": "Вкус",
+            "example": "Сладкий"
+          },
+          "inStock": {
+            "type": "boolean",
+            "description": "В наличии",
+            "default": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ProductImageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID изображения"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL изображения"
+          }
+        },
+        "required": [
+          "id",
+          "url"
+        ]
+      },
+      "ProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID продукта"
+          },
+          "name": {
+            "type": "string",
+            "description": "Название продукта"
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание продукта",
+            "nullable": true
+          },
+          "cuttingPrice": {
+            "type": "number",
+            "description": "Цена за черенок",
+            "nullable": true
+          },
+          "seedlingPrice": {
+            "type": "number",
+            "description": "Цена за саженец",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "number",
+            "description": "ID категории",
+            "nullable": true
+          },
+          "categoryName": {
+            "type": "string",
+            "description": "Название категории",
+            "nullable": true
+          },
+          "variety": {
+            "type": "string",
+            "description": "Сорт",
+            "nullable": true
+          },
+          "maturationPeriod": {
+            "type": "string",
+            "description": "Срок созревания",
+            "nullable": true
+          },
+          "berryShape": {
+            "type": "string",
+            "description": "Форма ягоды",
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "description": "Цвет ягоды",
+            "nullable": true
+          },
+          "taste": {
+            "type": "string",
+            "description": "Вкус",
+            "nullable": true
+          },
+          "inStock": {
+            "type": "boolean",
+            "description": "В наличии",
+            "default": true,
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Дата создания"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Дата обновления"
+          },
+          "images": {
+            "description": "Список изображений продукта",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number",
+                  "description": "ID изображения"
+                },
+                "url": {
+                  "type": "string",
+                  "description": "URL изображения"
+                }
+              },
+              "required": [
+                "id",
+                "url"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Список продуктов",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number",
+                  "description": "ID продукта"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Название продукта"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Описание продукта",
+                  "nullable": true
+                },
+                "cuttingPrice": {
+                  "type": "number",
+                  "description": "Цена за черенок",
+                  "nullable": true
+                },
+                "seedlingPrice": {
+                  "type": "number",
+                  "description": "Цена за саженец",
+                  "nullable": true
+                },
+                "categoryId": {
+                  "type": "number",
+                  "description": "ID категории",
+                  "nullable": true
+                },
+                "categoryName": {
+                  "type": "string",
+                  "description": "Название категории",
+                  "nullable": true
+                },
+                "variety": {
+                  "type": "string",
+                  "description": "Сорт",
+                  "nullable": true
+                },
+                "maturationPeriod": {
+                  "type": "string",
+                  "description": "Срок созревания",
+                  "nullable": true
+                },
+                "berryShape": {
+                  "type": "string",
+                  "description": "Форма ягоды",
+                  "nullable": true
+                },
+                "color": {
+                  "type": "string",
+                  "description": "Цвет ягоды",
+                  "nullable": true
+                },
+                "taste": {
+                  "type": "string",
+                  "description": "Вкус",
+                  "nullable": true
+                },
+                "inStock": {
+                  "type": "boolean",
+                  "description": "В наличии",
+                  "default": true,
+                  "nullable": true
+                },
+                "createdAt": {
+                  "format": "date-time",
+                  "type": "string",
+                  "description": "Дата создания"
+                },
+                "updatedAt": {
+                  "format": "date-time",
+                  "type": "string",
+                  "description": "Дата обновления"
+                },
+                "images": {
+                  "description": "Список изображений продукта",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number",
+                        "description": "ID изображения"
+                      },
+                      "url": {
+                        "type": "string",
+                        "description": "URL изображения"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "url"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "meta": {
+            "description": "Метаданные пагинации",
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "number",
+                    "description": "Общее количество элементов"
+                  },
+                  "page": {
+                    "type": "number",
+                    "description": "Текущая страница"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Количество элементов на странице"
+                  },
+                  "lastPage": {
+                    "type": "number",
+                    "description": "Последняя страница"
+                  }
+                },
+                "required": [
+                  "total",
+                  "page",
+                  "limit",
+                  "lastPage"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "AddItemToCartDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "number",
+            "description": "ID продукта для добавления в корзину",
+            "example": 1
+          },
+          "type": {
+            "type": "string",
+            "description": "Тип товара (черенок или саженец)",
+            "enum": [
+              "cutting",
+              "seedling"
+            ],
+            "example": "seedling"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Количество товара",
+            "default": 1,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "productId",
+          "type"
+        ]
+      },
+      "BaseCartItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID элемента корзины"
+          },
+          "userId": {
+            "type": "number",
+            "description": "ID пользователя"
+          },
+          "productId": {
+            "type": "number",
+            "description": "ID продукта"
+          },
+          "type": {
+            "type": "string",
+            "description": "Тип товара (черенок или саженец)",
+            "enum": [
+              "cutting",
+              "seedling"
+            ]
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Количество товара"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "productId",
+          "type",
+          "quantity"
+        ]
+      },
+      "CartDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Список товаров в корзине",
+            "items": {
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "totalCartPrice": {
+            "type": "number",
+            "description": "Общая стоимость всех товаров в корзине"
+          }
+        },
+        "required": [
+          "items",
+          "totalCartPrice"
+        ]
+      },
+      "UpdateCartItemDto": {
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "type": "number",
+            "description": "Новое количество товара в корзине",
+            "minimum": 1,
+            "example": 2
+          }
+        },
+        "required": [
+          "quantity"
+        ]
+      },
+      "OrderItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID позиции в заказе"
+          },
+          "orderId": {
+            "type": "number",
+            "description": "ID заказа, к которому относится позиция"
+          },
+          "productId": {
+            "type": "number",
+            "description": "ID заказанного продукта"
+          },
+          "type": {
+            "type": "string",
+            "description": "Тип товара (черенок или саженец)",
+            "enum": [
+              "cutting",
+              "seedling"
+            ]
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Количество товара в данной позиции"
+          },
+          "price": {
+            "type": "string",
+            "description": "Цена за единицу товара на момент заказа (строка)",
+            "example": "150.00"
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "productId",
+          "type",
+          "quantity",
+          "price"
+        ]
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID заказа"
+          },
+          "userId": {
+            "type": "number",
+            "description": "ID пользователя, оформившего заказ"
+          },
+          "totalPrice": {
+            "type": "string",
+            "description": "Общая стоимость заказа (строка)",
+            "example": "300.50"
+          },
+          "status": {
+            "type": "string",
+            "description": "Текущий статус заказа",
+            "enum": [
+              "Создан",
+              "В обработке",
+              "Отправлен",
+              "Доставлен",
+              "Отменен"
+            ],
+            "example": "Создан"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Дата и время создания заказа",
+            "nullable": true
+          },
+          "items": {
+            "description": "Список позиций в заказе",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number",
+                  "description": "ID позиции в заказе"
+                },
+                "orderId": {
+                  "type": "number",
+                  "description": "ID заказа, к которому относится позиция"
+                },
+                "productId": {
+                  "type": "number",
+                  "description": "ID заказанного продукта"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Тип товара (черенок или саженец)",
+                  "enum": [
+                    "cutting",
+                    "seedling"
+                  ]
+                },
+                "quantity": {
+                  "type": "number",
+                  "description": "Количество товара в данной позиции"
+                },
+                "price": {
+                  "type": "string",
+                  "description": "Цена за единицу товара на момент заказа (строка)",
+                  "example": "150.00"
+                }
+              },
+              "required": [
+                "id",
+                "orderId",
+                "productId",
+                "type",
+                "quantity",
+                "price"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "totalPrice",
+          "status",
+          "createdAt",
+          "items"
+        ]
+      },
+      "PaginatedOrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Массив заказов для текущей страницы",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number",
+                  "description": "ID заказа"
+                },
+                "userId": {
+                  "type": "number",
+                  "description": "ID пользователя, оформившего заказ"
+                },
+                "totalPrice": {
+                  "type": "string",
+                  "description": "Общая стоимость заказа (строка)",
+                  "example": "300.50"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Текущий статус заказа",
+                  "enum": [
+                    "Создан",
+                    "В обработке",
+                    "Отправлен",
+                    "Доставлен",
+                    "Отменен"
+                  ],
+                  "example": "Создан"
+                },
+                "createdAt": {
+                  "format": "date-time",
+                  "type": "string",
+                  "description": "Дата и время создания заказа",
+                  "nullable": true
+                },
+                "items": {
+                  "description": "Список позиций в заказе",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number",
+                        "description": "ID позиции в заказе"
+                      },
+                      "orderId": {
+                        "type": "number",
+                        "description": "ID заказа, к которому относится позиция"
+                      },
+                      "productId": {
+                        "type": "number",
+                        "description": "ID заказанного продукта"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "Тип товара (черенок или саженец)",
+                        "enum": [
+                          "cutting",
+                          "seedling"
+                        ]
+                      },
+                      "quantity": {
+                        "type": "number",
+                        "description": "Количество товара в данной позиции"
+                      },
+                      "price": {
+                        "type": "string",
+                        "description": "Цена за единицу товара на момент заказа (строка)",
+                        "example": "150.00"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "orderId",
+                      "productId",
+                      "type",
+                      "quantity",
+                      "price"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "userId",
+                "totalPrice",
+                "status",
+                "createdAt",
+                "items"
+              ]
+            }
+          },
+          "meta": {
+            "description": "Метаданные пагинации",
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "number",
+                    "description": "Общее количество элементов"
+                  },
+                  "page": {
+                    "type": "number",
+                    "description": "Текущая страница"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Количество элементов на странице"
+                  },
+                  "lastPage": {
+                    "type": "number",
+                    "description": "Последняя страница"
+                  }
+                },
+                "required": [
+                  "total",
+                  "page",
+                  "limit",
+                  "lastPage"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название категории",
+            "example": "Столовые сорта",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID категории"
+          },
+          "name": {
+            "type": "string",
+            "description": "Название категории"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Дата создания категории"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  }
+}

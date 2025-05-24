@@ -1,0 +1,125 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: grape_shop_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Build
+        run: yarn build
+
+      - name: Run migrations
+        run: yarn db:migrate
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: grape_shop_test
+
+      - name: Run tests
+        run: yarn test
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: grape_shop_test
+          JWT_SECRET: test_secret
+          JWT_EXPIRATION_TIME: 3600
+
+      - name: Generate Swagger docs
+        run: yarn generate:swagger
+
+  deploy:
+    needs: build-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      - name: Add VM to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Create .env file
+        run: |
+          cat > .env << EOL
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION_TIME=${{ secrets.JWT_EXPIRATION_TIME }}
+          AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_ENDPOINT_URL=${{ secrets.AWS_S3_ENDPOINT_URL }}
+          MAIL_TRANSPORT=${{ secrets.MAIL_TRANSPORT }}
+          MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }}
+          EOL
+      
+      - name: Copy files to VM
+        run: |
+          scp -r . ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:~/grape-shop-backend
+          scp .env ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:~/grape-shop-backend/.env
+      
+      - name: Deploy on VM
+        run: |
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} "cd ~/grape-shop-backend && docker-compose down && docker-compose build && docker-compose up -d"
+      
+      - name: Deployment status notification
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "Deployment successful!"
+          else
+            echo "Deployment failed!"
+          fi

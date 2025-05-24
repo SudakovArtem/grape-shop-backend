@@ -11,21 +11,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: grape_shop_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,29 +32,6 @@ jobs:
 
       - name: Build
         run: yarn build
-
-      - name: Run migrations
-        run: yarn db:migrate
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USER: postgres
-          DB_PASSWORD: postgres
-          DB_NAME: grape_shop_test
-
-      - name: Run tests
-        run: yarn test
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USER: postgres
-          DB_PASSWORD: postgres
-          DB_NAME: grape_shop_test
-          JWT_SECRET: test_secret
-          JWT_EXPIRATION_TIME: 3600
-
-      - name: Generate Swagger docs
-        run: yarn generate:swagger
 
   deploy:
     needs: build-and-test

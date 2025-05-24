@@ -42,6 +42,13 @@ jobs:
       ACTIONS_STEP_DEBUG: true
 
     steps:
+      - name: Debug secrets
+        run: |
+          echo "VM_USER: ${{ secrets.VM_USER }}"
+          echo "VM_HOST: ${{ secrets.VM_HOST }}"
+        env:
+          ACTIONS_STEP_DEBUG: true
+
       - name: Checkout code
         uses: actions/checkout@v4
 

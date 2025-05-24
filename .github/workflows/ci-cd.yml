@@ -84,7 +84,7 @@ jobs:
 
       - name: Copy files to VM
         run: |
-          scp -r . ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:~/grape-shop-backend
+          scp -r ./* ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:~/grape-shop-backend/
           scp .env ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:~/grape-shop-backend/.env
 
       - name: Deploy on VM

@@ -53,10 +53,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Test SSH connection
-        run: |
-          ssh -T -o StrictHostKeyChecking=no ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} "echo 'SSH connection successful'"
-
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.8.0
         with:

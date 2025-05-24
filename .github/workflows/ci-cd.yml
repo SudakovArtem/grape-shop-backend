@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-        
+
       - name: Check version compatibility
         run: yarn check:version
 
@@ -39,21 +39,21 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_VERSION: 20
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.8.0
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      
+
       - name: Add VM to known hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
-      
+
       - name: Create .env file
         run: |
           cat > .env << EOL
@@ -72,16 +72,16 @@ jobs:
           MAIL_TRANSPORT=${{ secrets.MAIL_TRANSPORT }}
           MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }}
           EOL
-      
+
       - name: Copy files to VM
         run: |
           scp -r . ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:~/grape-shop-backend
           scp .env ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:~/grape-shop-backend/.env
-      
+
       - name: Deploy on VM
         run: |
           ssh ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} "cd ~/grape-shop-backend && docker-compose down && docker-compose build --build-arg NODE_VERSION=$NODE_VERSION && docker-compose up -d"
-      
+
       - name: Deployment status notification
         if: always()
         run: |

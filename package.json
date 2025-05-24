@@ -20,7 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
-    "generate:swagger": "yarn build && npx tsx scripts/generate-swagger.ts"
+    "generate:swagger": "yarn build && npx tsx scripts/generate-swagger.ts",
+    "check:version": "node scripts/check-version-compatibility.js",
+    "predeploy": "yarn check:version"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.806.0",

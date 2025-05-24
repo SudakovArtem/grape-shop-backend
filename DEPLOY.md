@@ -8,6 +8,7 @@
 - Docker и Docker Compose на VM
 - SSH-доступ к VM
 - Репозиторий проекта на GitHub
+- Node.js версии 20 или выше (проект использует NestJS 11, который требует Node.js ≥ 20)
 
 ## Настройка на виртуальной машине
 
@@ -15,6 +16,11 @@
 
 ```bash
 # Установка Docker
+# Установка Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Установка Docker и Docker Compose
 sudo apt update
 sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -93,6 +99,16 @@ cd ~/grape-shop-backend
 docker-compose logs -f app
 ```
 
+## Проверка версии Node.js
+
+Перед деплоем рекомендуется проверить совместимость версии Node.js:
+
+```bash
+cd ~/grape-shop-backend
+node -v  # Должно показать v20.x.x или выше
+yarn check:version  # Запустит скрипт проверки совместимости
+```
+
 ## Устранение неполадок
 
 1. **Проблемы с подключением по SSH**:
@@ -107,9 +123,15 @@ docker-compose logs -f app
    - Проверьте наличие и корректность файла `.env` на VM
    - Проверьте, что все необходимые секреты добавлены в GitHub Secrets
 
+4. **Проблемы с версией Node.js**:
+   - Убедитесь, что используется Node.js версии 20 или выше
+   - Запустите `yarn check:version` для проверки совместимости
+   - При обновлении пакетов NestJS, проверьте их требования к версии Node.js
+
 ## Структура проекта для деплоя
 
 - `docker-compose.yml` - конфигурация Docker Compose
-- `Dockerfile` - инструкции для сборки Docker-образа
+- `Dockerfile` - инструкции для сборки Docker-образа (использует Node.js 20)
 - `.github/workflows/ci-cd.yml` - конфигурация GitHub Actions
 - `scripts/deploy.sh` - скрипт для деплоя на VM
+- `scripts/check-version-compatibility.js` - скрипт для проверки совместимости версий

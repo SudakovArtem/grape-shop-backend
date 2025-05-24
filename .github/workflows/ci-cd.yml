@@ -33,11 +33,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'yarn'
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+        
+      - name: Check version compatibility
+        run: yarn check:version
 
       - name: Lint
         run: yarn lint
@@ -72,6 +75,8 @@ jobs:
     needs: build-and-test
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: 20
     
     steps:
       - name: Checkout code
@@ -113,7 +118,7 @@ jobs:
       
       - name: Deploy on VM
         run: |
-          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} "cd ~/grape-shop-backend && docker-compose down && docker-compose build && docker-compose up -d"
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} "cd ~/grape-shop-backend && docker-compose down && docker-compose build --build-arg NODE_VERSION=$NODE_VERSION && docker-compose up -d"
       
       - name: Deployment status notification
         if: always()

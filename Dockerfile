@@ -1,6 +1,11 @@
-FROM node:18-alpine AS builder
+ARG NODE_VERSION=20
+FROM node:${NODE_VERSION}-alpine AS builder
 
 WORKDIR /app
+
+# Pass the NODE_VERSION argument between stages
+ARG NODE_VERSION
+ENV NODE_VERSION=${NODE_VERSION}
 
 # Copy package.json and yarn.lock
 COPY package.json yarn.lock ./
@@ -18,7 +23,8 @@ RUN yarn build
 RUN yarn generate:swagger
 
 # Production stage
-FROM node:18-alpine
+ARG NODE_VERSION=20
+FROM node:${NODE_VERSION}-alpine
 
 WORKDIR /app
 

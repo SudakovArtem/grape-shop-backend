@@ -32,27 +32,8 @@ services:
       - ./logs:/app/logs
     networks:
       - grape-network
-    depends_on:
-      - db
-
-  db:
-    image: postgres:15-alpine
-    container_name: grape-shop-db
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - grape-network
+    # Database is running separately, so we don't need to depend on it here
 
 networks:
   grape-network:
     driver: bridge
-
-volumes:
-  postgres_data:

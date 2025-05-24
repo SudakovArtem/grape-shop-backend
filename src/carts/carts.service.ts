@@ -94,7 +94,7 @@ export class CartsService {
       cartItem = newCartItems[0]
     }
 
-    await this.logsService.createLog('cart_item_added_or_updated', userId)
+    await this.logsService.createLog('cart_item_added_or_updated', userId, { productId, type, quantity })
 
     return cartItem
   }

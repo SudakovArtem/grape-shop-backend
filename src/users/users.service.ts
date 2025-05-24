@@ -90,7 +90,7 @@ export class UsersService {
     }
     const newUser = result[0]
 
-    await this.logsService.createLog('user_registered', newUser.id)
+    await this.logsService.createLog('user_registered', newUser.id, { email: newUser.email })
     try {
       await this.emailService.sendRegistrationWelcomeEmail(newUser.email, newUser.name)
     } catch (error) {
@@ -327,7 +327,7 @@ export class UsersService {
       )
     }
 
-    await this.logsService.createLog('user_deleted', currentUser.id)
+    await this.logsService.createLog('user_deleted', currentUser.id, { userId: idToDelete })
   }
 
   async findAllUsers(

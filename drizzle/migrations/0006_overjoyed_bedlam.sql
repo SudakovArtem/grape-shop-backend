@@ -1,0 +1,1 @@
+ALTER TABLE "logs" ADD COLUMN "additional_data" text;

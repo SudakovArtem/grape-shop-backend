@@ -43,6 +43,13 @@
       "when": 1746888051950,
       "tag": "0005_wonderful_nocturne",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1748099863737,
+      "tag": "0006_overjoyed_bedlam",
+      "breakpoints": true
     }
   ]
 }

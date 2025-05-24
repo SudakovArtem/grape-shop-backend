@@ -28,4 +28,8 @@ async function bootstrap() {
   console.log(`Application is running on: ${await app.getUrl()}`)
   console.log(`Swagger documentation available at: ${await app.getUrl()}/api-docs`)
 }
-bootstrap()
+// Добавляем обработку ошибок к вызову bootstrap
+void bootstrap().catch((err) => {
+  console.error('Failed to start application:', err)
+  process.exit(1)
+})

@@ -143,7 +143,7 @@ export class OrdersService {
       await tx.delete(carts).where(eq(carts.userId, userId))
 
       // Логируем создание заказа
-      await this.logsService.createLog('order_created', userId)
+      await this.logsService.createLog('order_created', userId, { orderId: orderId })
 
       // --- Отправляем email подтверждение ---
       try {
@@ -307,7 +307,7 @@ export class OrdersService {
           )
         }
       }
-      await this.logsService.createLog('order_cancelled', currentUser.id)
+      await this.logsService.createLog('order_cancelled', currentUser.id, { orderId: updatedOrder.id })
       const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, updatedOrder.id))
       return { ...updatedOrder, items }
     })

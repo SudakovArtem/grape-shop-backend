@@ -92,5 +92,6 @@ export const logs = pgTable('logs', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id), // Может быть NULL для гостевых действий
   action: varchar('action', { length: 255 }).notNull(),
+  additionalData: text('additional_data'), // JSON-строка для дополнительных данных
   timestamp: timestamp('timestamp').defaultNow()
 })

@@ -19,9 +19,6 @@ COPY . .
 # Build the application
 RUN yarn build
 
-# Generate Swagger documentation
-RUN yarn generate:swagger
-
 # Production stage
 ARG NODE_VERSION=20
 FROM node:${NODE_VERSION}-alpine
@@ -49,4 +46,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # Run database migrations and start the application
-CMD yarn db:migrate && yarn start:prod
+CMD yarn start:prod

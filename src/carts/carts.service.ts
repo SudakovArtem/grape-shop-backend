@@ -2,8 +2,8 @@ import { Inject, Injectable, NotFoundException, BadRequestException, ForbiddenEx
 import { DRIZZLE_PROVIDER_TOKEN } from '../db/constants'
 import { db } from '../db'
 import { AddItemToCartDto } from './dto/add-item-to-cart.dto'
-import { carts, products } from '../db/schema' // Импортируем схемы
-import { eq, and } from 'drizzle-orm'
+import { carts, products, productImages } from '../db/schema' // Импортируем схемы
+import { eq, and, asc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { LogsService } from '../logs/logs.service' // Импорт LogsService
 
@@ -18,13 +18,19 @@ export interface CartItemWithProductDetails extends CartItem {
   productName: string | null
   unitPrice: number // Цена за единицу (черенок или саженец)
   itemTotalPrice: number // quantity * unitPrice
-  imageUrl?: string // Опционально: URL основного изображения продукта
+  imageUrl?: string | null // Опционально: URL основного изображения продукта
+  berryShape?: string | null // Форма ягод
+  color?: string | null // Цвет
+  taste?: string | null // Вкус
+  variety?: string | null // Сорт
+  inStock?: boolean | null // Наличие товара на складе
 }
 
 // Тип для ответа метода getCart
 export interface CartDetails {
   items: CartItemWithProductDetails[]
   totalCartPrice: number // Общая стоимость корзины
+  totalItems: number // Общее количество товаров в корзине
 }
 
 @Injectable()
@@ -93,9 +99,17 @@ export class CartsService {
     return cartItem
   }
 
+  /**
+   * Получает содержимое корзины пользователя с детальной информацией о продуктах
+   * @param userId ID пользователя
+   * @returns Объект CartDetails, содержащий список товаров с детальной информацией
+   * о каждом продукте (включая berryShape, color, taste, variety, imageUrl, inStock), общую стоимость корзины
+   * и общее количество товаров (totalItems)
+   */
   async getCart(userId: number): Promise<CartDetails> {
     const p = alias(products, 'p')
 
+    // Получаем данные корзины с информацией о продуктах
     const cartItemsData = await this.drizzle
       .select({
         // Явно перечисляем поля из carts
@@ -107,14 +121,45 @@ export class CartsService {
         // Поля из products (через alias p)
         productName: p.name,
         cuttingPrice: p.cuttingPrice,
-        seedlingPrice: p.seedlingPrice
-        // imageUrl: ... (пока без изображения)
+        seedlingPrice: p.seedlingPrice,
+        // Дополнительные свойства продукта
+        berryShape: p.berryShape,
+        color: p.color,
+        taste: p.taste,
+        variety: p.variety,
+        inStock: p.inStock
       })
       .from(carts)
       .leftJoin(p, eq(carts.productId, p.id))
       .where(eq(carts.userId, userId))
 
+    // Получаем изображения для всех продуктов в корзине
+    const productIds = cartItemsData.map((item) => item.productId)
+    // Создаем map изображений продуктов
+    const productImagesMap: Record<number, string> = {}
+    if (productIds.length > 0) {
+      // Получаем первое изображение для каждого продукта в одном запросе
+      const productImagesData = await this.drizzle
+        .select({
+          productId: productImages.productId,
+          imageUrl: productImages.imageUrl
+        })
+        .from(productImages)
+        .where(inArray(productImages.productId, productIds))
+        .orderBy(asc(productImages.id))
+
+      // Создаем Map, где для каждого productId сохраняем только первое изображение
+      const processedProductIds = new Set<number>()
+      for (const img of productImagesData) {
+        if (!processedProductIds.has(img.productId)) {
+          productImagesMap[img.productId] = img.imageUrl
+          processedProductIds.add(img.productId)
+        }
+      }
+    }
+
     let totalCartPrice = 0
+    let totalItems = 0
     const items: CartItemWithProductDetails[] = cartItemsData.map((item) => {
       const unitPriceDecimal = item.type === 'cutting' ? item.cuttingPrice : item.seedlingPrice
       // Преобразуем цену из строки (decimal) в число
@@ -122,6 +167,7 @@ export class CartsService {
 
       const itemTotalPrice = item.quantity * unitPrice
       totalCartPrice += itemTotalPrice
+      totalItems += item.quantity
 
       // Явно создаем объект restOfItem с нужными полями
       const restOfItem = {
@@ -130,8 +176,13 @@ export class CartsService {
         productId: item.productId,
         type: item.type,
         quantity: item.quantity,
-        productName: item.productName
-        // imageUrl: item.imageUrl // Раскомментируйте, если imageUrl используется
+        productName: item.productName,
+        berryShape: item.berryShape,
+        color: item.color,
+        taste: item.taste,
+        variety: item.variety,
+        inStock: item.inStock,
+        imageUrl: productImagesMap[item.productId] || null
       }
 
       return {
@@ -143,7 +194,8 @@ export class CartsService {
 
     return {
       items,
-      totalCartPrice
+      totalCartPrice,
+      totalItems
     }
   }
 

@@ -3,10 +3,20 @@ import { IsOptional, IsInt, Min, Max, IsString, IsNumber, IsIn, IsEnum } from 'c
 import { ApiPropertyOptional } from '@nestjs/swagger'
 
 // Допустимые значения для полей фильтрации (можно вынести в константы или enum)
-const VALID_MATURATION_PERIODS = ['Ран.', 'Ультр.', 'Ср.', 'Поздн.'] // Пример
-const VALID_BERRY_SHAPES = ['Пальч.', 'Овал.', 'Кругл.'] // Пример
-const VALID_COLORS = ['Желт.', 'Красн.', 'Син.', 'Розов.'] // Пример
-const VALID_TASTES = ['Гарм.', 'Муск.', 'Прост.'] // Пример
+const VALID_MATURATION_PERIODS = ['Ультраранний', 'Очень ранний', 'Ранний', 'Ранне-средний', 'Средний', 'Не указан'] // Пример
+const VALID_BERRY_SHAPES = ['Овальная', 'Пальцевидная', 'Удлиненная', 'Яйцевидная', 'Круглая'] // Пример
+const VALID_COLORS = [
+  'Желтый',
+  'Красный',
+  'Розово-красный',
+  'Темно-красный',
+  'Темный',
+  'Белый',
+  'Бело-розовый',
+  'Желто-розовый',
+  'Розовый'
+] // Пример
+const VALID_TASTES = ['Гармоничный', 'Мускатный', 'Легкий мускат', 'Фруктовый'] // Пример
 
 export enum ProductSortBy {
   CreatedAtDesc = 'createdAt_desc',

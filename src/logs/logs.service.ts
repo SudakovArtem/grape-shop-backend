@@ -22,7 +22,7 @@ export class LogsService {
       await this.drizzle.insert(logs).values({
         action,
         userId: userId ?? null,
-        // Assuming 'additionalData' is the correct field name based on the error
+        timestamp: new Date(),
         additionalData: additionalData ? JSON.stringify(additionalData) : null
       })
       // Логирование в консоль для отладки (можно убрать)

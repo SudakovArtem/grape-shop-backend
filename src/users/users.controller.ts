@@ -27,7 +27,6 @@ import { FindAllUsersQueryDto } from './dto/find-all-users-query.dto'
 import { UserResponseDto } from './dto/user-response.dto'
 import { LoginResponseDto } from './dto/login-response.dto'
 import { MessageResponseDto } from '../common/dto/message-response.dto'
-import { AuthenticatedUserDto } from './dto/authenticated-user.dto'
 import { PaginatedUserResponseDto } from './dto/paginated-user-response.dto'
 import { AuthenticatedUser } from './jwt.strategy'
 
@@ -110,17 +109,13 @@ export class UsersController {
 
   @Get('profile')
   @ApiOperation({ summary: 'Получить профиль текущего пользователя' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Профиль текущего пользователя.', type: AuthenticatedUserDto })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Профиль текущего пользователя.', type: UserResponseDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Пользователь не авторизован.' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
-  getProfile(@Request() req: { user: AuthenticatedUser }): AuthenticatedUserDto {
-    return {
-      id: req.user.id,
-      email: req.user.email,
-      role: req.user.role
-    }
+  async getProfile(@Request() req: { user: AuthenticatedUser }): Promise<UserResponseDto> {
+    return await this.usersService.getProfile(req.user.id)
   }
 
   @Put('profile')

@@ -12,6 +12,8 @@ import { EmailModule } from './email/email.module'
 import { APP_GUARD } from '@nestjs/core'
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'
 import { DbModule } from './db/db.module'
+import { ArticlesModule } from './articles/articles.module'
+import { ArticleCategoriesModule } from './article-categories/article-categories.module'
 
 @Module({
   imports: [
@@ -31,7 +33,9 @@ import { DbModule } from './db/db.module'
     CategoriesModule,
     EmailModule,
     UploadsModule,
-    DbModule
+    DbModule,
+    ArticlesModule,
+    ArticleCategoriesModule
   ],
   providers: [
     {

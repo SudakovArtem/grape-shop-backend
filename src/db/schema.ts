@@ -95,3 +95,23 @@ export const logs = pgTable('logs', {
   additionalData: text('additional_data'), // JSON-строка для дополнительных данных
   timestamp: timestamp('timestamp').defaultNow()
 })
+
+export const articleCategories = pgTable('article_categories', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow()
+})
+
+export const articles = pgTable('articles', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  content: text('content').notNull(),
+  imageUrl: varchar('image_url', { length: 512 }),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  authorId: integer('author_id').references(() => users.id),
+  categoryId: integer('category_id').references(() => articleCategories.id),
+  published: boolean('published').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+})

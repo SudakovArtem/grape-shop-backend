@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { db } from '../db'
 import { articleCategories, articles } from '../db/schema'
-import { eq, sql, count } from 'drizzle-orm'
+import { eq, count } from 'drizzle-orm'
 import { CreateArticleCategoryDto, UpdateArticleCategoryDto } from './dto'
 
 @Injectable()

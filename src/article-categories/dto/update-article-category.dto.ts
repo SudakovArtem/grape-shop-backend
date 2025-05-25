@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator'
+import { IsString, IsOptional, MaxLength } from 'class-validator'
 import { PartialType } from '@nestjs/mapped-types'
 import { CreateArticleCategoryDto } from './create-article-category.dto'
 

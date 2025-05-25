@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, MaxLength, IsInt, IsUrl } from 'class-validator'
+import { IsString, IsOptional, IsBoolean, MaxLength, IsInt, IsUrl } from 'class-validator'
 import { PartialType } from '@nestjs/mapped-types'
 import { CreateArticleDto } from './create-article.dto'
 import { Type } from 'class-transformer'

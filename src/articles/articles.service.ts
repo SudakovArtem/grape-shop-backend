@@ -152,10 +152,12 @@ export class ArticlesService {
 
     return {
       data: articlesWithDetails,
-      total,
-      page,
-      limit,
-      pageCount: Math.ceil(total / limit)
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit)
+      }
     }
   }
 

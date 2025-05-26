@@ -58,6 +58,7 @@
       AWS_ACCESS_KEY_ID=your_access_key_id
       AWS_SECRET_ACCESS_KEY=your_secret_access_key
       AWS_S3_ENDPOINT_URL=https://s3.your_region.amazonaws.com
+      STORAGE_PUBLIC_BASE_URL=https://your_storage_url
 
       # Mail config
       MAIL_TRANSPORT=smtp://<your_email>:<your_password>@smtp.<your_mail_provider>.com

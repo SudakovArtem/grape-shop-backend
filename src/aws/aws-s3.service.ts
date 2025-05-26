@@ -91,14 +91,12 @@ export class AwsS3Service {
 
   // Метод для получения URL файла (если ACL public-read или есть presigned URL)
   getFileUrl(fileKey: string): string {
-    // Это базовый URL, если файлы публичны. Для presigned URL логика будет другой.
-    const endpointUrl = this.configService.get<string>('AWS_S3_ENDPOINT_URL')
+    const storageUrl = this.configService.get<string>('STORAGE_PUBLIC_BASE_URL')
     const region = this.configService.get<string>('AWS_REGION')
 
-    if (endpointUrl) {
-      // Для Yandex S3 или другого S3-совместимого хранилища с кастомным эндпоинтом
+    if (storageUrl) {
       // Убедимся, что URL не содержит двойных слешей между эндпоинтом и бакетом.
-      const endpoint = endpointUrl.endsWith('/') ? endpointUrl.slice(0, -1) : endpointUrl
+      const endpoint = storageUrl.endsWith('/') ? storageUrl.slice(0, -1) : storageUrl
       return `${endpoint}/${this.bucketName}/${fileKey}`
     } else {
       // Стандартный AWS S3 URL

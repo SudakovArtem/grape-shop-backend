@@ -553,27 +553,58 @@
                   "properties": {
                     "id": {
                       "type": "number",
-                      "description": "ID аутентифицированного пользователя"
+                      "description": "ID пользователя"
                     },
                     "email": {
                       "type": "string",
-                      "description": "Email аутентифицированного пользователя",
+                      "description": "Email пользователя",
                       "example": "user@example.com"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Имя пользователя",
+                      "example": "Иван Иванов",
+                      "nullable": true
+                    },
+                    "address": {
+                      "type": "string",
+                      "description": "Адрес пользователя",
+                      "example": "ул. Примерная, д.1",
+                      "nullable": true
+                    },
+                    "phone": {
+                      "type": "string",
+                      "description": "Телефон пользователя",
+                      "example": "+79001234567",
+                      "nullable": true
+                    },
+                    "avatar": {
+                      "type": "string",
+                      "description": "URL аватара пользователя",
+                      "nullable": true,
+                      "example": "https://example.com/avatar.jpg"
                     },
                     "role": {
                       "type": "string",
-                      "description": "Роль аутентифицированного пользователя",
+                      "description": "Роль пользователя",
                       "enum": [
                         "user",
                         "admin"
                       ],
                       "example": "user"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата регистрации пользователя",
+                      "nullable": true
                     }
                   },
                   "required": [
                     "id",
                     "email",
-                    "role"
+                    "role",
+                    "createdAt"
                   ]
                 }
               }
@@ -1125,10 +1156,12 @@
             "schema": {
               "type": "string",
               "enum": [
-                "Ран.",
-                "Ультр.",
-                "Ср.",
-                "Поздн."
+                "Ультраранний",
+                "Очень ранний",
+                "Ранний",
+                "Ранне-средний",
+                "Средний",
+                "Не указан"
               ]
             }
           },
@@ -1140,9 +1173,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "Пальч.",
-                "Овал.",
-                "Кругл."
+                "Овальная",
+                "Пальцевидная",
+                "Удлиненная",
+                "Яйцевидная",
+                "Круглая"
               ]
             }
           },
@@ -1154,10 +1189,15 @@
             "schema": {
               "type": "string",
               "enum": [
-                "Желт.",
-                "Красн.",
-                "Син.",
-                "Розов."
+                "Желтый",
+                "Красный",
+                "Розово-красный",
+                "Темно-красный",
+                "Темный",
+                "Белый",
+                "Бело-розовый",
+                "Желто-розовый",
+                "Розовый"
               ]
             }
           },
@@ -1169,9 +1209,10 @@
             "schema": {
               "type": "string",
               "enum": [
-                "Гарм.",
-                "Муск.",
-                "Прост."
+                "Гармоничный",
+                "Мускатный",
+                "Легкий мускат",
+                "Фруктовый"
               ]
             }
           },
@@ -3387,6 +3428,1214 @@
           "uploads"
         ]
       }
+    },
+    "/articles": {
+      "post": {
+        "operationId": "ArticlesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Как выращивать виноград в домашних условиях"
+                  },
+                  "content": {
+                    "type": "string",
+                    "example": "<p>Подробная инструкция по выращиванию винограда...</p>"
+                  },
+                  "slug": {
+                    "type": "string",
+                    "example": "kak-vyraschivat-vinograd-v-domashnih-usloviyah"
+                  },
+                  "categoryId": {
+                    "type": "number",
+                    "example": 1
+                  },
+                  "published": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "imageUrl": {
+                    "type": "string",
+                    "example": "https://example.com/images/grape-growing.jpg"
+                  }
+                },
+                "required": [
+                  "title",
+                  "content",
+                  "slug"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Статья успешно создана.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "Уникальный идентификатор статьи",
+                      "example": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Заголовок статьи",
+                      "example": "Как выращивать виноград в домашних условиях"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Содержание статьи в формате HTML",
+                      "example": "<p>Подробная инструкция по выращиванию винограда...</p>"
+                    },
+                    "imageUrl": {
+                      "type": "object",
+                      "description": "URL изображения статьи",
+                      "example": "https://grape-shop-bucket.s3.eu-central-1.amazonaws.com/article-images/grape-growing.jpg"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "URL-дружественный slug для статьи",
+                      "example": "kak-vyraschivat-vinograd-v-domashnih-usloviyah"
+                    },
+                    "authorId": {
+                      "type": "object",
+                      "description": "Идентификатор автора статьи",
+                      "example": 1
+                    },
+                    "authorName": {
+                      "type": "object",
+                      "description": "Имя автора статьи",
+                      "example": "Иван Виноградов"
+                    },
+                    "categoryId": {
+                      "type": "object",
+                      "description": "Идентификатор категории статьи",
+                      "example": 2
+                    },
+                    "categoryName": {
+                      "type": "object",
+                      "description": "Название категории статьи",
+                      "example": "Советы по выращиванию"
+                    },
+                    "published": {
+                      "type": "boolean",
+                      "description": "Флаг публикации статьи",
+                      "example": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания статьи",
+                      "example": "2023-09-10T15:30:45.000Z"
+                    },
+                    "updatedAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата последнего обновления статьи",
+                      "example": "2023-09-15T10:20:30.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "content",
+                    "slug",
+                    "published",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для создания статьи."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Создать новую статью (только для администраторов)",
+        "tags": [
+          "Articles"
+        ]
+      },
+      "get": {
+        "operationId": "ArticlesController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Номер страницы для пагинации",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Количество элементов на странице",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Поисковый запрос (поиск по заголовку и содержимому)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "published",
+            "required": false,
+            "in": "query",
+            "description": "Фильтр по статусу публикации (только для админов)",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "ID категории для фильтрации статей",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Поле для сортировки (по умолчанию createdAt)",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "title",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Порядок сортировки",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список статей с пагинацией.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "description": "Массив статей",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "Уникальный идентификатор статьи",
+                            "example": 1
+                          },
+                          "title": {
+                            "type": "string",
+                            "description": "Заголовок статьи",
+                            "example": "Как выращивать виноград в домашних условиях"
+                          },
+                          "content": {
+                            "type": "string",
+                            "description": "Содержание статьи в формате HTML",
+                            "example": "<p>Подробная инструкция по выращиванию винограда...</p>"
+                          },
+                          "imageUrl": {
+                            "type": "object",
+                            "description": "URL изображения статьи",
+                            "example": "https://grape-shop-bucket.s3.eu-central-1.amazonaws.com/article-images/grape-growing.jpg"
+                          },
+                          "slug": {
+                            "type": "string",
+                            "description": "URL-дружественный slug для статьи",
+                            "example": "kak-vyraschivat-vinograd-v-domashnih-usloviyah"
+                          },
+                          "authorId": {
+                            "type": "object",
+                            "description": "Идентификатор автора статьи",
+                            "example": 1
+                          },
+                          "authorName": {
+                            "type": "object",
+                            "description": "Имя автора статьи",
+                            "example": "Иван Виноградов"
+                          },
+                          "categoryId": {
+                            "type": "object",
+                            "description": "Идентификатор категории статьи",
+                            "example": 2
+                          },
+                          "categoryName": {
+                            "type": "object",
+                            "description": "Название категории статьи",
+                            "example": "Советы по выращиванию"
+                          },
+                          "published": {
+                            "type": "boolean",
+                            "description": "Флаг публикации статьи",
+                            "example": true
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string",
+                            "description": "Дата создания статьи",
+                            "example": "2023-09-10T15:30:45.000Z"
+                          },
+                          "updatedAt": {
+                            "format": "date-time",
+                            "type": "string",
+                            "description": "Дата последнего обновления статьи",
+                            "example": "2023-09-15T10:20:30.000Z"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "content",
+                          "slug",
+                          "published",
+                          "createdAt",
+                          "updatedAt"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number",
+                      "description": "Общее количество статей",
+                      "example": 100
+                    },
+                    "page": {
+                      "type": "number",
+                      "description": "Текущая страница",
+                      "example": 1
+                    },
+                    "limit": {
+                      "type": "number",
+                      "description": "Количество статей на странице",
+                      "example": 10
+                    },
+                    "pageCount": {
+                      "type": "number",
+                      "description": "Общее количество страниц",
+                      "example": 10
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "limit",
+                    "pageCount"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Получить список всех статей с фильтрацией и пагинацией",
+        "tags": [
+          "Articles"
+        ]
+      }
+    },
+    "/articles/slug/{slug}": {
+      "get": {
+        "operationId": "ArticlesController_findBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "description": "Slug статьи",
+            "schema": {
+              "example": "kak-vyraschivat-vinograd-v-domashnih-usloviyah",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Статья найдена.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "Уникальный идентификатор статьи",
+                      "example": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Заголовок статьи",
+                      "example": "Как выращивать виноград в домашних условиях"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Содержание статьи в формате HTML",
+                      "example": "<p>Подробная инструкция по выращиванию винограда...</p>"
+                    },
+                    "imageUrl": {
+                      "type": "object",
+                      "description": "URL изображения статьи",
+                      "example": "https://grape-shop-bucket.s3.eu-central-1.amazonaws.com/article-images/grape-growing.jpg"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "URL-дружественный slug для статьи",
+                      "example": "kak-vyraschivat-vinograd-v-domashnih-usloviyah"
+                    },
+                    "authorId": {
+                      "type": "object",
+                      "description": "Идентификатор автора статьи",
+                      "example": 1
+                    },
+                    "authorName": {
+                      "type": "object",
+                      "description": "Имя автора статьи",
+                      "example": "Иван Виноградов"
+                    },
+                    "categoryId": {
+                      "type": "object",
+                      "description": "Идентификатор категории статьи",
+                      "example": 2
+                    },
+                    "categoryName": {
+                      "type": "object",
+                      "description": "Название категории статьи",
+                      "example": "Советы по выращиванию"
+                    },
+                    "published": {
+                      "type": "boolean",
+                      "description": "Флаг публикации статьи",
+                      "example": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания статьи",
+                      "example": "2023-09-10T15:30:45.000Z"
+                    },
+                    "updatedAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата последнего обновления статьи",
+                      "example": "2023-09-15T10:20:30.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "content",
+                    "slug",
+                    "published",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Статья с таким slug не найдена."
+          }
+        },
+        "summary": "Получить статью по slug",
+        "tags": [
+          "Articles"
+        ]
+      }
+    },
+    "/articles/{id}": {
+      "get": {
+        "operationId": "ArticlesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID статьи",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Статья найдена.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "Уникальный идентификатор статьи",
+                      "example": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Заголовок статьи",
+                      "example": "Как выращивать виноград в домашних условиях"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Содержание статьи в формате HTML",
+                      "example": "<p>Подробная инструкция по выращиванию винограда...</p>"
+                    },
+                    "imageUrl": {
+                      "type": "object",
+                      "description": "URL изображения статьи",
+                      "example": "https://grape-shop-bucket.s3.eu-central-1.amazonaws.com/article-images/grape-growing.jpg"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "URL-дружественный slug для статьи",
+                      "example": "kak-vyraschivat-vinograd-v-domashnih-usloviyah"
+                    },
+                    "authorId": {
+                      "type": "object",
+                      "description": "Идентификатор автора статьи",
+                      "example": 1
+                    },
+                    "authorName": {
+                      "type": "object",
+                      "description": "Имя автора статьи",
+                      "example": "Иван Виноградов"
+                    },
+                    "categoryId": {
+                      "type": "object",
+                      "description": "Идентификатор категории статьи",
+                      "example": 2
+                    },
+                    "categoryName": {
+                      "type": "object",
+                      "description": "Название категории статьи",
+                      "example": "Советы по выращиванию"
+                    },
+                    "published": {
+                      "type": "boolean",
+                      "description": "Флаг публикации статьи",
+                      "example": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания статьи",
+                      "example": "2023-09-10T15:30:45.000Z"
+                    },
+                    "updatedAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата последнего обновления статьи",
+                      "example": "2023-09-15T10:20:30.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "content",
+                    "slug",
+                    "published",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Статья с таким ID не найдена."
+          }
+        },
+        "summary": "Получить статью по ID",
+        "tags": [
+          "Articles"
+        ]
+      },
+      "put": {
+        "operationId": "ArticlesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Обновленный заголовок статьи"
+                  },
+                  "content": {
+                    "type": "string",
+                    "example": "<p>Обновленное содержание статьи...</p>"
+                  },
+                  "slug": {
+                    "type": "string",
+                    "example": "obnovlennyi-slug-stati"
+                  },
+                  "categoryId": {
+                    "type": "number",
+                    "example": 1
+                  },
+                  "published": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "imageUrl": {
+                    "type": "string",
+                    "example": "https://example.com/images/grape-growing.jpg"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Статья успешно обновлена.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "Уникальный идентификатор статьи",
+                      "example": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Заголовок статьи",
+                      "example": "Как выращивать виноград в домашних условиях"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Содержание статьи в формате HTML",
+                      "example": "<p>Подробная инструкция по выращиванию винограда...</p>"
+                    },
+                    "imageUrl": {
+                      "type": "object",
+                      "description": "URL изображения статьи",
+                      "example": "https://grape-shop-bucket.s3.eu-central-1.amazonaws.com/article-images/grape-growing.jpg"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "URL-дружественный slug для статьи",
+                      "example": "kak-vyraschivat-vinograd-v-domashnih-usloviyah"
+                    },
+                    "authorId": {
+                      "type": "object",
+                      "description": "Идентификатор автора статьи",
+                      "example": 1
+                    },
+                    "authorName": {
+                      "type": "object",
+                      "description": "Имя автора статьи",
+                      "example": "Иван Виноградов"
+                    },
+                    "categoryId": {
+                      "type": "object",
+                      "description": "Идентификатор категории статьи",
+                      "example": 2
+                    },
+                    "categoryName": {
+                      "type": "object",
+                      "description": "Название категории статьи",
+                      "example": "Советы по выращиванию"
+                    },
+                    "published": {
+                      "type": "boolean",
+                      "description": "Флаг публикации статьи",
+                      "example": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания статьи",
+                      "example": "2023-09-10T15:30:45.000Z"
+                    },
+                    "updatedAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата последнего обновления статьи",
+                      "example": "2023-09-15T10:20:30.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "content",
+                    "slug",
+                    "published",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для обновления статьи."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "404": {
+            "description": "Статья с таким ID не найдена."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Обновить статью по ID (только для администраторов)",
+        "tags": [
+          "Articles"
+        ]
+      },
+      "delete": {
+        "operationId": "ArticlesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID статьи",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Статья успешно удалена."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "404": {
+            "description": "Статья с таким ID не найдена."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Удалить статью по ID (только для администраторов)",
+        "tags": [
+          "Articles"
+        ]
+      }
+    },
+    "/article-categories": {
+      "post": {
+        "operationId": "ArticleCategoriesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Название категории статей",
+                    "example": "Советы по выращиванию"
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "URL-дружественный slug для категории",
+                    "example": "sovety-po-vyraschivaniyu"
+                  }
+                },
+                "required": [
+                  "name",
+                  "slug"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Категория успешно создана.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "Уникальный идентификатор категории",
+                      "example": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название категории статей",
+                      "example": "Советы по выращиванию"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "URL-дружественный slug для категории",
+                      "example": "sovety-po-vyraschivaniyu"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания категории",
+                      "example": "2023-09-10T15:30:45.000Z"
+                    },
+                    "articlesCount": {
+                      "type": "number",
+                      "description": "Количество статей в категории",
+                      "example": 5
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для создания категории."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Создать новую категорию статей (только для администраторов)",
+        "tags": [
+          "Article Categories"
+        ]
+      },
+      "get": {
+        "operationId": "ArticleCategoriesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Список категорий статей.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number",
+                        "description": "Уникальный идентификатор категории",
+                        "example": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Название категории статей",
+                        "example": "Советы по выращиванию"
+                      },
+                      "slug": {
+                        "type": "string",
+                        "description": "URL-дружественный slug для категории",
+                        "example": "sovety-po-vyraschivaniyu"
+                      },
+                      "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "description": "Дата создания категории",
+                        "example": "2023-09-10T15:30:45.000Z"
+                      },
+                      "articlesCount": {
+                        "type": "number",
+                        "description": "Количество статей в категории",
+                        "example": 5
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "slug",
+                      "createdAt"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Получить список всех категорий статей",
+        "tags": [
+          "Article Categories"
+        ]
+      }
+    },
+    "/article-categories/slug/{slug}": {
+      "get": {
+        "operationId": "ArticleCategoriesController_findBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "description": "Slug категории",
+            "schema": {
+              "example": "sovety-po-vyraschivaniyu",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Категория найдена.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "Уникальный идентификатор категории",
+                      "example": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название категории статей",
+                      "example": "Советы по выращиванию"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "URL-дружественный slug для категории",
+                      "example": "sovety-po-vyraschivaniyu"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания категории",
+                      "example": "2023-09-10T15:30:45.000Z"
+                    },
+                    "articlesCount": {
+                      "type": "number",
+                      "description": "Количество статей в категории",
+                      "example": 5
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Категория с таким slug не найдена."
+          }
+        },
+        "summary": "Получить категорию статей по slug",
+        "tags": [
+          "Article Categories"
+        ]
+      }
+    },
+    "/article-categories/{id}": {
+      "get": {
+        "operationId": "ArticleCategoriesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID категории",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Категория найдена.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "Уникальный идентификатор категории",
+                      "example": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название категории статей",
+                      "example": "Советы по выращиванию"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "URL-дружественный slug для категории",
+                      "example": "sovety-po-vyraschivaniyu"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания категории",
+                      "example": "2023-09-10T15:30:45.000Z"
+                    },
+                    "articlesCount": {
+                      "type": "number",
+                      "description": "Количество статей в категории",
+                      "example": 5
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Категория с таким ID не найдена."
+          }
+        },
+        "summary": "Получить категорию статей по ID",
+        "tags": [
+          "Article Categories"
+        ]
+      },
+      "put": {
+        "operationId": "ArticleCategoriesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID категории",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Название категории статей",
+                    "example": "Советы по выращиванию"
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "URL-дружественный slug для категории",
+                    "example": "sovety-po-vyraschivaniyu"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Категория успешно обновлена.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "Уникальный идентификатор категории",
+                      "example": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название категории статей",
+                      "example": "Советы по выращиванию"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "URL-дружественный slug для категории",
+                      "example": "sovety-po-vyraschivaniyu"
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания категории",
+                      "example": "2023-09-10T15:30:45.000Z"
+                    },
+                    "articlesCount": {
+                      "type": "number",
+                      "description": "Количество статей в категории",
+                      "example": 5
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные данные для обновления категории."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "404": {
+            "description": "Категория с таким ID не найдена."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Обновить категорию статей по ID (только для администраторов)",
+        "tags": [
+          "Article Categories"
+        ]
+      },
+      "delete": {
+        "operationId": "ArticleCategoriesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID категории",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Категория успешно удалена."
+          },
+          "400": {
+            "description": "Невозможно удалить категорию, так как она используется в статьях."
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          },
+          "403": {
+            "description": "Недостаточно прав."
+          },
+          "404": {
+            "description": "Категория с таким ID не найдена."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Удалить категорию статей по ID (только для администраторов)",
+        "tags": [
+          "Article Categories"
+        ]
+      }
     }
   },
   "info": {
@@ -3705,34 +4954,6 @@
         "required": [
           "token",
           "newPassword"
-        ]
-      },
-      "AuthenticatedUserDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "ID аутентифицированного пользователя"
-          },
-          "email": {
-            "type": "string",
-            "description": "Email аутентифицированного пользователя",
-            "example": "user@example.com"
-          },
-          "role": {
-            "type": "string",
-            "description": "Роль аутентифицированного пользователя",
-            "enum": [
-              "user",
-              "admin"
-            ],
-            "example": "user"
-          }
-        },
-        "required": [
-          "id",
-          "email",
-          "role"
         ]
       },
       "UpdateUserDto": {
@@ -4507,6 +5728,265 @@
       "UpdateCategoryDto": {
         "type": "object",
         "properties": {}
+      },
+      "ArticleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Уникальный идентификатор статьи",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок статьи",
+            "example": "Как выращивать виноград в домашних условиях"
+          },
+          "content": {
+            "type": "string",
+            "description": "Содержание статьи в формате HTML",
+            "example": "<p>Подробная инструкция по выращиванию винограда...</p>"
+          },
+          "imageUrl": {
+            "type": "object",
+            "description": "URL изображения статьи",
+            "example": "https://grape-shop-bucket.s3.eu-central-1.amazonaws.com/article-images/grape-growing.jpg"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-дружественный slug для статьи",
+            "example": "kak-vyraschivat-vinograd-v-domashnih-usloviyah"
+          },
+          "authorId": {
+            "type": "object",
+            "description": "Идентификатор автора статьи",
+            "example": 1
+          },
+          "authorName": {
+            "type": "object",
+            "description": "Имя автора статьи",
+            "example": "Иван Виноградов"
+          },
+          "categoryId": {
+            "type": "object",
+            "description": "Идентификатор категории статьи",
+            "example": 2
+          },
+          "categoryName": {
+            "type": "object",
+            "description": "Название категории статьи",
+            "example": "Советы по выращиванию"
+          },
+          "published": {
+            "type": "boolean",
+            "description": "Флаг публикации статьи",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Дата создания статьи",
+            "example": "2023-09-10T15:30:45.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Дата последнего обновления статьи",
+            "example": "2023-09-15T10:20:30.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "content",
+          "slug",
+          "published",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedArticleResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Массив статей",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number",
+                  "description": "Уникальный идентификатор статьи",
+                  "example": 1
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Заголовок статьи",
+                  "example": "Как выращивать виноград в домашних условиях"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "Содержание статьи в формате HTML",
+                  "example": "<p>Подробная инструкция по выращиванию винограда...</p>"
+                },
+                "imageUrl": {
+                  "type": "object",
+                  "description": "URL изображения статьи",
+                  "example": "https://grape-shop-bucket.s3.eu-central-1.amazonaws.com/article-images/grape-growing.jpg"
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "URL-дружественный slug для статьи",
+                  "example": "kak-vyraschivat-vinograd-v-domashnih-usloviyah"
+                },
+                "authorId": {
+                  "type": "object",
+                  "description": "Идентификатор автора статьи",
+                  "example": 1
+                },
+                "authorName": {
+                  "type": "object",
+                  "description": "Имя автора статьи",
+                  "example": "Иван Виноградов"
+                },
+                "categoryId": {
+                  "type": "object",
+                  "description": "Идентификатор категории статьи",
+                  "example": 2
+                },
+                "categoryName": {
+                  "type": "object",
+                  "description": "Название категории статьи",
+                  "example": "Советы по выращиванию"
+                },
+                "published": {
+                  "type": "boolean",
+                  "description": "Флаг публикации статьи",
+                  "example": true
+                },
+                "createdAt": {
+                  "format": "date-time",
+                  "type": "string",
+                  "description": "Дата создания статьи",
+                  "example": "2023-09-10T15:30:45.000Z"
+                },
+                "updatedAt": {
+                  "format": "date-time",
+                  "type": "string",
+                  "description": "Дата последнего обновления статьи",
+                  "example": "2023-09-15T10:20:30.000Z"
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "content",
+                "slug",
+                "published",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Общее количество статей",
+            "example": 100
+          },
+          "page": {
+            "type": "number",
+            "description": "Текущая страница",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Количество статей на странице",
+            "example": 10
+          },
+          "pageCount": {
+            "type": "number",
+            "description": "Общее количество страниц",
+            "example": 10
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "pageCount"
+        ]
+      },
+      "CreateArticleCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название категории статей",
+            "example": "Советы по выращиванию"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-дружественный slug для категории",
+            "example": "sovety-po-vyraschivaniyu"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "ArticleCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Уникальный идентификатор категории",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Название категории статей",
+            "example": "Советы по выращиванию"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-дружественный slug для категории",
+            "example": "sovety-po-vyraschivaniyu"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Дата создания категории",
+            "example": "2023-09-10T15:30:45.000Z"
+          },
+          "articlesCount": {
+            "type": "number",
+            "description": "Количество статей в категории",
+            "example": 5
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "createdAt"
+        ]
+      },
+      "UpdateArticleCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название категории статей",
+            "example": "Советы по выращиванию"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-дружественный slug для категории",
+            "example": "sovety-po-vyraschivaniyu"
+          }
+        }
       }
     }
   }

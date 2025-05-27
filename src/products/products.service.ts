@@ -7,6 +7,7 @@ import { FindAllProductsQueryDto, ProductSortBy } from './dto/find-all-products-
 import { CreateProductDto } from './dto/create-product.dto' // Импортируем CreateProductDto
 import { UpdateProductDto } from './dto/update-product.dto' // Импортируем UpdateProductDto
 import { AwsS3Service } from '../aws/aws-s3.service' // Импортируем AwsS3Service
+import { generateSlug } from '../common/utils/slug.utils'; // Импортируем утилиту для генерации slug
 
 // Повторно определим тип DrizzleDB, если он не экспортируется из другого места глобально
 // или можно было бы вынести его в общий файл типов.
@@ -24,10 +25,34 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<typeof products.$inferSelect> {
-    const { variety, cuttingPrice, seedlingPrice, ...restOfDto } = createProductDto
+    const { variety, cuttingPrice, seedlingPrice, slug, ...restOfDto } = createProductDto
+
+    let productSlug = slug
+    if (!productSlug) {
+      productSlug = generateSlug(createProductDto.name)
+    }
+
+    // Проверка уникальности slug
+    let existingProductWithSlug = await this.drizzle
+      .select({ id: products.id })
+      .from(products)
+      .where(eq(products.slug, productSlug))
+      .limit(1)
+
+    let counter = 1
+    while (existingProductWithSlug.length > 0) {
+      productSlug = `${generateSlug(createProductDto.name)}-${counter}`;
+      existingProductWithSlug = await this.drizzle
+        .select({ id: products.id })
+        .from(products)
+        .where(eq(products.slug, productSlug))
+        .limit(1)
+      counter++;
+    }
 
     const newProductData: typeof products.$inferInsert = {
       ...restOfDto,
+      slug: productSlug, // Используем сгенерированный или предоставленный slug
       variety: variety ?? createProductDto.name, // Если variety не указан, используем name
       // Преобразуем цены в строки для Drizzle, если они есть. Drizzle ожидает string для decimal.
       cuttingPrice: cuttingPrice !== undefined && cuttingPrice !== null ? String(cuttingPrice) : null,
@@ -279,6 +304,41 @@ export class ProductsService {
       .where(eq(productImages.productId, id))
 
     const product = productData[0]
+    const images = imagesData.map((img) => ({ id: img.id, url: img.imageUrl }))
+
+    return {
+      ...product,
+      images
+    }
+  }
+
+  async getProductBySlug(slug: string) {
+    // Получаем основные данные продукта и имя категории по slug
+    const productData = await this.drizzle
+      .select({
+        ...getTableColumns(products),
+        categoryName: categories.name
+      })
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .where(eq(products.slug, slug))
+      .limit(1)
+
+    if (productData.length === 0) {
+      throw new NotFoundException(`Продукт со slug "${slug}" не найден`)
+    }
+
+    const product = productData[0]
+
+    // Получаем все изображения для этого продукта
+    const imagesData = await this.drizzle
+      .select({
+        id: productImages.id,
+        imageUrl: productImages.imageUrl
+      })
+      .from(productImages)
+      .where(eq(productImages.productId, product.id))
+
     const images = imagesData.map((img) => ({ id: img.id, url: img.imageUrl }))
 
     return {

@@ -21,13 +21,13 @@ export class CreateArticleDto {
   content: string
 
   @ApiProperty({
-    description: 'URL-дружественный slug для статьи',
+    description: 'URL-дружественный slug для статьи (генерируется автоматически, если не указан)',
     example: 'kak-vyraschivat-vinograd-v-domashnih-usloviyah'
   })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(255)
-  slug: string
+  slug?: string
 
   @ApiProperty({
     description: 'ID категории статьи',

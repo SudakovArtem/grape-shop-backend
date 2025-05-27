@@ -20,6 +20,12 @@ export class CreateProductDto {
   @MaxLength(255)
   name: string
 
+  @ApiPropertyOptional({ description: 'Уникальный идентификатор продукта для URL (генерируется автоматически, если не указан)', example: 'vinograd-kishmish' })
+  @IsString({ message: 'Slug должен быть строкой' })
+  @IsOptional()
+  @MaxLength(255)
+  slug?: string
+
   @ApiPropertyOptional({ description: 'Описание продукта', example: 'Сладкий сорт без косточек' })
   @IsString({ message: 'Описание должно быть строкой' })
   @IsOptional()

@@ -9,6 +9,7 @@ export const categories = pgTable('categories', {
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
   description: text('description'),
   cuttingPrice: decimal('cutting_price', { precision: 10, scale: 2 }),
   seedlingPrice: decimal('seedling_price', { precision: 10, scale: 2 }),

@@ -15,6 +15,9 @@ export class ProductResponseDto {
   @ApiProperty({ description: 'Название продукта', type: String })
   name: string
 
+  @ApiProperty({ description: 'Уникальный идентификатор продукта для URL', type: String })
+  slug: string
+
   @ApiPropertyOptional({ description: 'Описание продукта', type: String, nullable: true })
   description?: string | null
 

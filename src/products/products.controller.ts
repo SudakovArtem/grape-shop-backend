@@ -70,6 +70,15 @@ export class ProductsController {
     return this.productsService.findOne(id)
   }
 
+  @Get('slug/:slug')
+  @ApiOperation({ summary: 'Получить продукт по SLUG' })
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({ status: HttpStatus.OK, description: 'Продукт найден.', type: ProductResponseDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Продукт с таким SLUG не найден.' })
+  async getProductBySlug(@Param('slug') slug: string) {
+    return this.productsService.getProductBySlug(slug)
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Обновить продукт по ID (только для администраторов)' })
   @ApiBearerAuth()

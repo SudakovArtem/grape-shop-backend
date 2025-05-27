@@ -3,14 +3,25 @@ import { db } from '../db'
 import { articles, users, articleCategories } from '../db/schema'
 import { eq, sql, desc, asc, and } from 'drizzle-orm'
 import { CreateArticleDto, UpdateArticleDto, FindAllArticlesQueryDto, SortOrder } from './dto'
+import { generateSlug } from '../common/utils/slug.utils'
 
 @Injectable()
 export class ArticlesService {
   async create(createArticleDto: CreateArticleDto, authorId: number) {
-    // Проверка на уникальность slug
-    const existingArticle = await db.select().from(articles).where(eq(articles.slug, createArticleDto.slug)).limit(1)
-    if (existingArticle.length > 0) {
-      throw new BadRequestException(`Статья с slug "${createArticleDto.slug}" уже существует`)
+    let articleSlug = createArticleDto.slug
+
+    if (!articleSlug) {
+      // Если slug не предоставлен, генерируем его из заголовка
+      articleSlug = generateSlug(createArticleDto.title)
+    }
+
+    // Проверка на уникальность slug с добавлением суффикса при необходимости
+    let existingArticle = await db.select({ id: articles.id }).from(articles).where(eq(articles.slug, articleSlug)).limit(1)
+    let counter = 1
+    while (existingArticle.length > 0) {
+      articleSlug = `${generateSlug(createArticleDto.title)}-${counter}`;
+      existingArticle = await db.select({ id: articles.id }).from(articles).where(eq(articles.slug, articleSlug)).limit(1)
+      counter++;
     }
 
     // Используем URL изображения из DTO
@@ -22,7 +33,7 @@ export class ArticlesService {
       .values({
         title: createArticleDto.title,
         content: createArticleDto.content,
-        slug: createArticleDto.slug,
+        slug: articleSlug, // Используем сгенерированный или предоставленный уникальный slug
         published: createArticleDto.published ?? true,
         authorId,
         categoryId: createArticleDto.categoryId || null,
@@ -272,52 +283,75 @@ export class ArticlesService {
   }
 
   async update(id: number, updateArticleDto: UpdateArticleDto) {
-    // Проверяем существование статьи
+    // Проверяем, существует ли статья
     const existingArticle = await db.select().from(articles).where(eq(articles.id, id)).limit(1)
     if (existingArticle.length === 0) {
       throw new NotFoundException(`Статья с ID ${id} не найдена`)
     }
 
-    // Проверка на уникальность slug, если он был изменен
-    if (updateArticleDto.slug && updateArticleDto.slug !== existingArticle[0].slug) {
-      const duplicateSlug = await db.select().from(articles).where(eq(articles.slug, updateArticleDto.slug)).limit(1)
+    let articleSlug = updateArticleDto.slug
 
-      if (duplicateSlug.length > 0) {
-        throw new BadRequestException(`Статья с slug "${updateArticleDto.slug}" уже существует`)
-      }
+    // Если slug не предоставлен, но обновляется заголовок, генерируем новый slug
+    if (!articleSlug && updateArticleDto.title !== undefined) {
+      articleSlug = generateSlug(updateArticleDto.title)
     }
 
-    const updateData = {
-      ...updateArticleDto,
-      updatedAt: new Date()
-    }
-
-    const updatedArticle = await db.update(articles).set(updateData).where(eq(articles.id, id)).returning()
-
-    // Получаем данные автора
-    const author = updatedArticle[0].authorId
-      ? await db.select({ name: users.name }).from(users).where(eq(users.id, updatedArticle[0].authorId)).limit(1)
-      : []
-
-    // Получаем данные категории, если она есть
-    let categoryName: string | null = null
-    if (updatedArticle[0].categoryId) {
-      const categoryResult = await db
-        .select({ name: articleCategories.name })
-        .from(articleCategories)
-        .where(eq(articleCategories.id, updatedArticle[0].categoryId))
+    // Проверка уникальности slug (если он есть в DTO или был сгенерирован)
+    if (articleSlug !== undefined) {
+      let existingArticleWithSlug = await db
+        .select({ id: articles.id })
+        .from(articles)
+        .where(and(eq(articles.slug, articleSlug), sql`${articles.id} != ${id}`))
         .limit(1)
 
-      if (categoryResult.length > 0) {
-        categoryName = categoryResult[0].name
+      let counter = 1
+      // Если сгенерированный/предоставленный slug уже существует и не принадлежит текущей статье
+      while (existingArticleWithSlug.length > 0) {
+         // Если slug был предоставлен в DTO, при дубликате выбрасываем ошибку
+        if (updateArticleDto.slug !== undefined) {
+           throw new BadRequestException(`Статья с slug "${updateArticleDto.slug}" уже существует`)
+        }
+        // Если slug был сгенерирован, добавляем суффикс и повторяем проверку
+        const baseTitle = updateArticleDto.title !== undefined ? updateArticleDto.title : existingArticle[0].title;
+        articleSlug = `${generateSlug(baseTitle)}-${counter}`;
+        existingArticleWithSlug = await db
+          .select({ id: articles.id })
+          .from(articles)
+          .where(and(eq(articles.slug, articleSlug), sql`${articles.id} != ${id}`))
+          .limit(1)
+        counter++;
       }
     }
 
-    return {
-      ...updatedArticle[0],
-      authorName: author.length > 0 ? author[0].name : null,
-      categoryName
+    // Обновляем поля, если они присутствуют в DTO
+    const dataToUpdate: Partial<typeof articles.$inferInsert> = {
+      ...(updateArticleDto.title !== undefined && { title: updateArticleDto.title }),
+      ...(updateArticleDto.content !== undefined && { content: updateArticleDto.content }),
+      ...(articleSlug !== undefined && { slug: articleSlug }), // Используем сгенерированный или предоставленный slug
+      ...(updateArticleDto.categoryId !== undefined && { categoryId: updateArticleDto.categoryId || null }),
+      ...(updateArticleDto.imageUrl !== undefined && { imageUrl: updateArticleDto.imageUrl || null }),
+      ...(updateArticleDto.published !== undefined && { published: updateArticleDto.published }),
+      updatedAt: new Date() // Устанавливаем дату обновления
     }
+
+    // Если нет данных для обновления, возвращаем текущую статью
+    if (Object.keys(dataToUpdate).length === 0) {
+      return this.findOne(id) // findOne возвращает статью с деталями автора/категории
+    }
+
+    const result = await db
+      .update(articles)
+      .set(dataToUpdate)
+      .where(eq(articles.id, id))
+      .returning()
+
+    if (result.length === 0) {
+      // Эта ситуация маловероятна, если existingArticle найдена
+      throw new NotFoundException(`Статья с ID ${id} не удалось обновить`)
+    }
+
+    // Возвращаем обновленную статью с деталями автора/категории
+    return this.findOne(id)
   }
 
   async remove(id: number) {

@@ -1,6 +1,6 @@
 {
-  "id": "91bf1ffc-33fc-4ff5-9b65-4e4c48093111",
-  "prevId": "5b914631-fe37-49f6-8300-4ce5d5f11203",
+  "id": "1b70a0de-65c4-4350-a4d4-b86277a7e5b3",
+  "prevId": "91bf1ffc-33fc-4ff5-9b65-4e4c48093111",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -536,6 +536,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "description": {
           "name": "description",
           "type": "text",
@@ -629,7 +635,15 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "products_slug_unique": {
+          "name": "products_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

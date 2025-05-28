@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { db } from '../db'
 import { articles, users, articleCategories } from '../db/schema'
-import { eq, sql, desc, asc, and } from 'drizzle-orm'
+import { eq, sql, desc, asc, and, inArray } from 'drizzle-orm'
 import { CreateArticleDto, UpdateArticleDto, FindAllArticlesQueryDto, SortOrder } from './dto'
 import { generateSlug } from '../common/utils/slug.utils'
 
@@ -16,12 +16,20 @@ export class ArticlesService {
     }
 
     // Проверка на уникальность slug с добавлением суффикса при необходимости
-    let existingArticle = await db.select({ id: articles.id }).from(articles).where(eq(articles.slug, articleSlug)).limit(1)
+    let existingArticle = await db
+      .select({ id: articles.id })
+      .from(articles)
+      .where(eq(articles.slug, articleSlug))
+      .limit(1)
     let counter = 1
     while (existingArticle.length > 0) {
-      articleSlug = `${generateSlug(createArticleDto.title)}-${counter}`;
-      existingArticle = await db.select({ id: articles.id }).from(articles).where(eq(articles.slug, articleSlug)).limit(1)
-      counter++;
+      articleSlug = `${generateSlug(createArticleDto.title)}-${counter}`
+      existingArticle = await db
+        .select({ id: articles.id })
+        .from(articles)
+        .where(eq(articles.slug, articleSlug))
+        .limit(1)
+      counter++
     }
 
     // Используем URL изображения из DTO
@@ -137,21 +145,18 @@ export class ArticlesService {
       .offset(offset)
 
     // Получаем информацию об авторах
-    const authorIds = articlesResult.map((article) => article.authorId).filter(Boolean)
+    const authorIds = articlesResult.map((article) => article.authorId).filter((id): id is number => id !== null)
     const authors = authorIds.length
-      ? await db
-          .select({ id: users.id, name: users.name })
-          .from(users)
-          .where(sql`${users.id} IN (${authorIds.join(',')})`)
+      ? await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, authorIds))
       : []
 
     // Получаем информацию о категориях
-    const categoryIds = articlesResult.map((article) => article.categoryId).filter(Boolean)
+    const categoryIds = articlesResult.map((article) => article.categoryId).filter((id): id is number => id !== null)
     const categories = categoryIds.length
       ? await db
           .select({ id: articleCategories.id, name: articleCategories.name })
           .from(articleCategories)
-          .where(sql`${articleCategories.id} IN (${categoryIds.join(',')})`)
+          .where(inArray(articleCategories.id, categoryIds))
       : []
 
     // Добавляем имена авторов и категорий к статьям
@@ -307,19 +312,19 @@ export class ArticlesService {
       let counter = 1
       // Если сгенерированный/предоставленный slug уже существует и не принадлежит текущей статье
       while (existingArticleWithSlug.length > 0) {
-         // Если slug был предоставлен в DTO, при дубликате выбрасываем ошибку
+        // Если slug был предоставлен в DTO, при дубликате выбрасываем ошибку
         if (updateArticleDto.slug !== undefined) {
-           throw new BadRequestException(`Статья с slug "${updateArticleDto.slug}" уже существует`)
+          throw new BadRequestException(`Статья с slug "${updateArticleDto.slug}" уже существует`)
         }
         // Если slug был сгенерирован, добавляем суффикс и повторяем проверку
-        const baseTitle = updateArticleDto.title !== undefined ? updateArticleDto.title : existingArticle[0].title;
-        articleSlug = `${generateSlug(baseTitle)}-${counter}`;
+        const baseTitle = updateArticleDto.title !== undefined ? updateArticleDto.title : existingArticle[0].title
+        articleSlug = `${generateSlug(baseTitle)}-${counter}`
         existingArticleWithSlug = await db
           .select({ id: articles.id })
           .from(articles)
           .where(and(eq(articles.slug, articleSlug), sql`${articles.id} != ${id}`))
           .limit(1)
-        counter++;
+        counter++
       }
     }
 
@@ -339,11 +344,7 @@ export class ArticlesService {
       return this.findOne(id) // findOne возвращает статью с деталями автора/категории
     }
 
-    const result = await db
-      .update(articles)
-      .set(dataToUpdate)
-      .where(eq(articles.id, id))
-      .returning()
+    const result = await db.update(articles).set(dataToUpdate).where(eq(articles.id, id)).returning()
 
     if (result.length === 0) {
       // Эта ситуация маловероятна, если existingArticle найдена

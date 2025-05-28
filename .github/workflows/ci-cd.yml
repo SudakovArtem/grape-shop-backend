@@ -70,6 +70,7 @@ jobs:
           AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_S3_ENDPOINT_URL=${{ secrets.AWS_S3_ENDPOINT_URL }}
+          STORAGE_PUBLIC_BASE_URL=${{ secrets.STORAGE_PUBLIC_BASE_URL }}
           MAIL_TRANSPORT=${{ secrets.MAIL_TRANSPORT }}
           MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }}
           EOL

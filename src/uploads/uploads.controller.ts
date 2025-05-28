@@ -1,24 +1,18 @@
 import {
+  BadRequestException,
   Controller,
-  Post,
-  UploadedFile,
-  UseInterceptors,
-  UseGuards,
   HttpException,
   HttpStatus,
+  Post,
   Query,
-  ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator
+  UploadedFile,
+  UseGuards,
+  UseInterceptors
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { UploadsService } from './uploads.service'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
-
-const MAX_FILE_SIZE_MB = 5
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
-const ALLOWED_FILE_TYPES_REGEX = /^image\/(jpeg|png|webp)$/i
 
 @ApiTags('uploads')
 @Controller('uploads')
@@ -66,26 +60,21 @@ export class UploadsController {
   })
   @ApiResponse({ status: 401, description: 'Пользователь не авторизован' })
   @ApiResponse({ status: 500, description: 'Внутренняя ошибка сервера при загрузке файла' })
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES }),
-          new FileTypeValidator({ fileType: ALLOWED_FILE_TYPES_REGEX })
-        ],
-        fileIsRequired: true,
-        exceptionFactory: (error) => {
-          throw new HttpException(
-            `Ошибка валидации файла: ${error}. Допустимые типы: PNG, JPG, WEBP. Макс. размер: ${MAX_FILE_SIZE_MB}MB.`,
-            HttpStatus.BAD_REQUEST
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 1024 * 1024 * 5 }, // 5MB
+      fileFilter: (req, file, callback) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+          return callback(
+            new BadRequestException('Поддерживаются только изображения форматов: jpg, jpeg, png, gif'),
+            false
           )
         }
-      })
-    )
-    file: Express.Multer.File,
-    @Query('folder') folder?: string
-  ) {
+        callback(null, true)
+      }
+    })
+  )
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Query('folder') folder?: string) {
     if (!file) {
       throw new HttpException('Файл не был предоставлен', HttpStatus.BAD_REQUEST)
     }

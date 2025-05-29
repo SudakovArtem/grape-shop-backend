@@ -148,8 +148,8 @@ export class ProductsService {
       taste,
       search,
       sortBy = ProductSortBy.CreatedAtDesc,
-      cuttingInStock,
-      seedlingInStock
+      minCuttingInStock,
+      minSeedlingInStock
     } = queryDto
 
     const offset = (page - 1) * limit
@@ -176,11 +176,11 @@ export class ProductsService {
     }
 
     // Фильтр по наличию
-    if (cuttingInStock !== undefined) {
-      conditions.push(eq(products.cuttingInStock, cuttingInStock))
+    if (minCuttingInStock !== undefined) {
+      conditions.push(gte(products.cuttingInStock, minCuttingInStock))
     }
-    if (seedlingInStock !== undefined) {
-      conditions.push(eq(products.seedlingInStock, seedlingInStock))
+    if (minSeedlingInStock !== undefined) {
+      conditions.push(gte(products.seedlingInStock, minSeedlingInStock))
     }
 
     // Фильтр по цене (учитывает цену черенка ИЛИ саженца)

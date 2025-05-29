@@ -90,15 +90,19 @@ export class FindAllProductsQueryDto {
   @IsIn(VALID_TASTES, { message: 'Недопустимый вкус' })
   taste?: string
 
-  @ApiPropertyOptional({ description: 'Фильтр по наличию черенков', type: Boolean })
+  @ApiPropertyOptional({ description: 'Минимальное количество черенков в наличии', type: Number })
   @IsOptional()
-  @Type(() => Boolean) // Для преобразования из строки, если придет как query param
-  cuttingInStock?: boolean
+  @Type(() => Number)
+  @IsInt({ message: 'Минимальное количество черенков должно быть целым числом' })
+  @Min(0, { message: 'Минимальное количество черенков не может быть отрицательным' })
+  minCuttingInStock?: number
 
-  @ApiPropertyOptional({ description: 'Фильтр по наличию саженцев', type: Boolean })
+  @ApiPropertyOptional({ description: 'Минимальное количество саженцев в наличии', type: Number })
   @IsOptional()
-  @Type(() => Boolean)
-  seedlingInStock?: boolean
+  @Type(() => Number)
+  @IsInt({ message: 'Минимальное количество саженцев должно быть целым числом' })
+  @Min(0, { message: 'Минимальное количество саженцев не может быть отрицательным' })
+  minSeedlingInStock?: number
 
   // Поиск по ключевым словам
   @ApiPropertyOptional({ description: 'Поисковый запрос', type: String })

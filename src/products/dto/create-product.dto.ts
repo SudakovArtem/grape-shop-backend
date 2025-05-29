@@ -89,13 +89,19 @@ export class CreateProductDto {
   @MaxLength(50)
   taste?: string
 
-  @ApiPropertyOptional({ description: 'В наличии (черенок)', default: false })
-  @IsBoolean({ message: 'Наличие черенков должно быть булевым значением' })
+  @ApiPropertyOptional({ description: 'Количество черенков в наличии', example: 10, default: 0, type: Number })
   @IsOptional()
-  cuttingInStock?: boolean = false
+  @Type(() => Number)
+  @IsInt({ message: 'Количество черенков должно быть целым числом' })
+  @Min(0, { message: 'Количество черенков не может быть отрицательным' })
+  @IsOptional()
+  cuttingInStock?: number = 0
 
-  @ApiPropertyOptional({ description: 'В наличии (саженец)', default: false })
-  @IsBoolean({ message: 'Наличие саженцев должно быть булевым значением' })
+  @ApiPropertyOptional({ description: 'Количество саженцев в наличии', example: 5, default: 0, type: Number })
   @IsOptional()
-  seedlingInStock?: boolean = false
+  @Type(() => Number)
+  @IsInt({ message: 'Количество саженцев должно быть целым числом' })
+  @Min(0, { message: 'Количество саженцев не может быть отрицательным' })
+  @IsOptional()
+  seedlingInStock?: number = 0
 }

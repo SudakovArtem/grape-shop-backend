@@ -33,12 +33,12 @@ export class CartsController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Товар успешно добавлен/обновлен в корзине.',
-    type: BaseCartItemDto
+    type: CartDetailsResponseDto
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Неверные данные для добавления/обновления товара.' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Продукт не найден.' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Пользователь не авторизован.' })
-  async addItem(@Request() req: { user: { id: number } }, @Body() addItemToCartDto: AddItemToCartDto) {
+  async addItem(@Request() req: { user: { id: number } }, @Body() addItemToCartDto: AddItemToCartDto): Promise<CartDetailsResponseDto> {
     const userId = req.user.id
     return this.cartsService.addItem(userId, addItemToCartDto)
   }
@@ -77,17 +77,17 @@ export class CartsController {
 
   @Delete(':itemId')
   @UseGuards(AuthGuard('jwt'))
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Удалить товар из корзины' })
-  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Товар успешно удален из корзины.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Корзина после удаления товара.', type: CartDetailsResponseDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Элемент корзины не найден.' })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Попытка удалить чужой элемент корзины.' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Пользователь не авторизован.' })
   async removeItem(
     @Request() req: { user: { id: number } },
     @Param('itemId', ParseIntPipe) itemId: number
-  ): Promise<void> {
+  ): Promise<CartDetailsResponseDto> {
     const userId = req.user.id
-    await this.cartsService.removeItem(userId, itemId)
+    return this.cartsService.removeItem(userId, itemId)
   }
 }

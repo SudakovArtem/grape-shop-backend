@@ -34,5 +34,5 @@ export class CartItemResponseDto extends BaseCartItemDto {
   itemTotalPrice: number
 
   @ApiPropertyOptional({ description: 'URL основного изображения продукта', type: String, nullable: true })
-  imageUrl?: string
+  imageUrl?: string | null
 }

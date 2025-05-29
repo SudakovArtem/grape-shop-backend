@@ -24,6 +24,7 @@ export interface CartItemWithProductDetails extends CartItem {
   taste?: string | null // Вкус
   variety?: string | null // Сорт
   inStock?: boolean | null // Наличие товара на складе
+  type: 'cutting' | 'seedling' // Явно указываем более специфичный тип
 }
 
 // Тип для ответа метода getCart
@@ -40,7 +41,7 @@ export class CartsService {
     private readonly logsService: LogsService // Инъекция LogsService
   ) {}
 
-  async addItem(userId: number, addItemDto: AddItemToCartDto): Promise<CartItem> {
+  async addItem(userId: number, addItemDto: AddItemToCartDto): Promise<CartDetails> {
     const { productId, type, quantity = 1 } = addItemDto
 
     // 1. Проверить, существует ли продукт и можно ли его добавить (например, есть ли нужный тип цены)
@@ -96,7 +97,8 @@ export class CartsService {
 
     await this.logsService.createLog('cart_item_added_or_updated', userId, { productId, type, quantity })
 
-    return cartItem
+    // Вернуть полную корзину после добавления/обновления
+    return this.getCart(userId)
   }
 
   /**
@@ -174,7 +176,7 @@ export class CartsService {
         id: item.id,
         userId: item.userId,
         productId: item.productId,
-        type: item.type,
+        type: item.type as 'cutting' | 'seedling',
         quantity: item.quantity,
         productName: item.productName,
         berryShape: item.berryShape,
@@ -221,7 +223,7 @@ export class CartsService {
     return updatedItems[0]
   }
 
-  async removeItem(userId: number, itemId: number): Promise<void> {
+  async removeItem(userId: number, itemId: number): Promise<CartDetails> {
     // 1. Найти элемент по itemId
     const cartItem = await this.drizzle
       .select({ id: carts.id, userId: carts.userId }) // Выбираем только нужные поля
@@ -242,5 +244,8 @@ export class CartsService {
 
     // 3. Удалить элемент
     await this.drizzle.delete(carts).where(eq(carts.id, itemId))
+
+    // Вернуть полную корзину после удаления
+    return this.getCart(userId)
   }
 }

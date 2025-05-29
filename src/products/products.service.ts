@@ -8,9 +8,6 @@ import { CreateProductDto } from './dto/create-product.dto' // Импортир�
 import { UpdateProductDto } from './dto/update-product.dto' // Импортируем UpdateProductDto
 import { AwsS3Service } from '../aws/aws-s3.service' // Импортируем AwsS3Service
 import { generateSlug } from '../common/utils/slug.utils'; // Импортируем утилиту для генерации slug
-import { IsIn, IsOptional } from 'class-validator'
-import { ApiPropertyOptional } from '@nestjs/swagger'
-import { Type } from 'class-transformer'
 
 // Повторно определим тип DrizzleDB, если он не экспортируется из другого места глобально
 // или можно было бы вынести его в общий файл типов.

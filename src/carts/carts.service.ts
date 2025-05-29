@@ -23,8 +23,8 @@ export interface CartItemWithProductDetails extends CartItem {
   color?: string | null // Цвет
   taste?: string | null // Вкус
   variety?: string | null // Сорт
-  cuttingInStock?: boolean | null // Наличие черенков
-  seedlingInStock?: boolean | null // Наличие саженцев
+  cuttingInStock?: number | null // Количество черенков
+  seedlingInStock?: number | null // Количество саженцев
   type: 'cutting' | 'seedling' // Явно указываем более специфичный тип
 }
 

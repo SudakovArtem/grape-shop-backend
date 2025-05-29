@@ -948,14 +948,16 @@
                     "example": "Сладкий"
                   },
                   "cuttingInStock": {
-                    "type": "boolean",
-                    "description": "В наличии (черенок)",
-                    "default": false
+                    "type": "number",
+                    "description": "Количество черенков в наличии",
+                    "example": 10,
+                    "default": 0
                   },
                   "seedlingInStock": {
-                    "type": "boolean",
-                    "description": "В наличии (саженец)",
-                    "default": false
+                    "type": "number",
+                    "description": "Количество саженцев в наличии",
+                    "example": 5,
+                    "default": 0
                   }
                 },
                 "required": [
@@ -1036,15 +1038,15 @@
                       "nullable": true
                     },
                     "cuttingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (черенок)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество черенков в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "seedlingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (саженец)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество саженцев в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "createdAt": {
@@ -1238,6 +1240,24 @@
             }
           },
           {
+            "name": "minCuttingInStock",
+            "required": false,
+            "in": "query",
+            "description": "Минимальное количество черенков в наличии",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "minSeedlingInStock",
+            "required": false,
+            "in": "query",
+            "description": "Минимальное количество саженцев в наличии",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
             "name": "search",
             "required": false,
             "in": "query",
@@ -1342,15 +1362,15 @@
                             "nullable": true
                           },
                           "cuttingInStock": {
-                            "type": "boolean",
-                            "description": "В наличии (черенок)",
-                            "default": false,
+                            "type": "number",
+                            "description": "Количество черенков в наличии",
+                            "default": 0,
                             "nullable": true
                           },
                           "seedlingInStock": {
-                            "type": "boolean",
-                            "description": "В наличии (саженец)",
-                            "default": false,
+                            "type": "number",
+                            "description": "Количество саженцев в наличии",
+                            "default": 0,
                             "nullable": true
                           },
                           "createdAt": {
@@ -1526,15 +1546,15 @@
                       "nullable": true
                     },
                     "cuttingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (черенок)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество черенков в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "seedlingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (саженец)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество саженцев в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "createdAt": {
@@ -1683,15 +1703,15 @@
                       "nullable": true
                     },
                     "cuttingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (черенок)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество черенков в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "seedlingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (саженец)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество саженцев в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "createdAt": {
@@ -1881,15 +1901,15 @@
                       "nullable": true
                     },
                     "cuttingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (черенок)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество черенков в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "seedlingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (саженец)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество саженцев в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "createdAt": {
@@ -2058,15 +2078,15 @@
                       "nullable": true
                     },
                     "cuttingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (черенок)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество черенков в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "seedlingInStock": {
-                      "type": "boolean",
-                      "description": "В наличии (саженец)",
-                      "default": false,
+                      "type": "number",
+                      "description": "Количество саженцев в наличии",
+                      "default": 0,
                       "nullable": true
                     },
                     "createdAt": {
@@ -5261,14 +5281,16 @@
             "example": "Сладкий"
           },
           "cuttingInStock": {
-            "type": "boolean",
-            "description": "В наличии (черенок)",
-            "default": false
+            "type": "number",
+            "description": "Количество черенков в наличии",
+            "example": 10,
+            "default": 0
           },
           "seedlingInStock": {
-            "type": "boolean",
-            "description": "В наличии (саженец)",
-            "default": false
+            "type": "number",
+            "description": "Количество саженцев в наличии",
+            "example": 5,
+            "default": 0
           }
         },
         "required": [
@@ -5358,15 +5380,15 @@
             "nullable": true
           },
           "cuttingInStock": {
-            "type": "boolean",
-            "description": "В наличии (черенок)",
-            "default": false,
+            "type": "number",
+            "description": "Количество черенков в наличии",
+            "default": 0,
             "nullable": true
           },
           "seedlingInStock": {
-            "type": "boolean",
-            "description": "В наличии (саженец)",
-            "default": false,
+            "type": "number",
+            "description": "Количество саженцев в наличии",
+            "default": 0,
             "nullable": true
           },
           "createdAt": {
@@ -5481,15 +5503,15 @@
                   "nullable": true
                 },
                 "cuttingInStock": {
-                  "type": "boolean",
-                  "description": "В наличии (черенок)",
-                  "default": false,
+                  "type": "number",
+                  "description": "Количество черенков в наличии",
+                  "default": 0,
                   "nullable": true
                 },
                 "seedlingInStock": {
-                  "type": "boolean",
-                  "description": "В наличии (саженец)",
-                  "default": false,
+                  "type": "number",
+                  "description": "Количество саженцев в наличии",
+                  "default": 0,
                   "nullable": true
                 },
                 "createdAt": {

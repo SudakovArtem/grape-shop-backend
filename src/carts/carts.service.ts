@@ -67,7 +67,6 @@ export class CartsService {
     }
 
     // 2. Найти существующий элемент корзины для этого пользователя, продукта и типа
-    let cartItem: CartItem
     const existingCartItem = await this.drizzle
       .select()
       .from(carts)
@@ -86,14 +85,12 @@ export class CartsService {
       if (!updatedItems || updatedItems.length === 0) {
         throw new Error('Не удалось обновить количество товара в корзине')
       }
-      cartItem = updatedItems[0]
     } else {
       const newCartItems = await this.drizzle.insert(carts).values({ userId, productId, type, quantity }).returning()
 
       if (!newCartItems || newCartItems.length === 0) {
         throw new Error('Не удалось добавить товар в корзину')
       }
-      cartItem = newCartItems[0]
     }
 
     await this.logsService.createLog('cart_item_added_or_updated', userId, { productId, type, quantity })

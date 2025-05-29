@@ -48,8 +48,11 @@ export class ProductResponseDto {
   @ApiPropertyOptional({ description: 'Вкус', type: String, nullable: true })
   taste?: string | null
 
-  @ApiPropertyOptional({ description: 'В наличии', type: Boolean, default: true, nullable: true })
-  inStock?: boolean | null
+  @ApiPropertyOptional({ description: 'В наличии (черенок)', type: Boolean, default: false, nullable: true })
+  cuttingInStock?: boolean | null
+
+  @ApiPropertyOptional({ description: 'В наличии (саженец)', type: Boolean, default: false, nullable: true })
+  seedlingInStock?: boolean | null
 
   @ApiProperty({ description: 'Дата создания', type: Date })
   createdAt: Date

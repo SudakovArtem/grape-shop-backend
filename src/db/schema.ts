@@ -19,7 +19,8 @@ export const products = pgTable('products', {
   berryShape: varchar('berry_shape', { length: 50 }),
   color: varchar('color', { length: 50 }),
   taste: varchar('taste', { length: 50 }),
-  inStock: boolean('in_stock').default(true),
+  cuttingInStock: boolean('cutting_in_stock').default(false),
+  seedlingInStock: boolean('seedling_in_stock').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 })

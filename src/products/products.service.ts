@@ -56,7 +56,10 @@ export class ProductsService {
       variety: variety ?? createProductDto.name, // Если variety не указан, используем name
       // Преобразуем цены в строки для Drizzle, если они есть. Drizzle ожидает string для decimal.
       cuttingPrice: cuttingPrice !== undefined && cuttingPrice !== null ? String(cuttingPrice) : null,
-      seedlingPrice: seedlingPrice !== undefined && seedlingPrice !== null ? String(seedlingPrice) : null
+      seedlingPrice: seedlingPrice !== undefined && seedlingPrice !== null ? String(seedlingPrice) : null,
+      // Добавляем новые поля для наличия
+      cuttingInStock: createProductDto.cuttingInStock,
+      seedlingInStock: createProductDto.seedlingInStock
       // createdAt и updatedAt будут установлены по умолчанию базой данных
     }
 
@@ -90,6 +93,14 @@ export class ProductsService {
     }
     if ('seedlingPrice' in updateProductDto) {
       dataToUpdate.seedlingPrice = seedlingPrice !== undefined && seedlingPrice !== null ? String(seedlingPrice) : null
+    }
+
+    // Обрабатываем поля наличия, если они есть в DTO
+    if ('cuttingInStock' in updateProductDto) {
+      dataToUpdate.cuttingInStock = updateProductDto.cuttingInStock
+    }
+    if ('seedlingInStock' in updateProductDto) {
+      dataToUpdate.seedlingInStock = updateProductDto.seedlingInStock
     }
 
     // Добавляем updatedAt вручную, если не настроено автоматическое обновление в БД через триггер

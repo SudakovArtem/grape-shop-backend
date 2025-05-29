@@ -23,7 +23,8 @@ export interface CartItemWithProductDetails extends CartItem {
   color?: string | null // Цвет
   taste?: string | null // Вкус
   variety?: string | null // Сорт
-  inStock?: boolean | null // Наличие товара на складе
+  cuttingInStock?: boolean | null // Наличие черенков
+  seedlingInStock?: boolean | null // Наличие саженцев
   type: 'cutting' | 'seedling' // Явно указываем более специфичный тип
 }
 
@@ -129,7 +130,8 @@ export class CartsService {
         color: p.color,
         taste: p.taste,
         variety: p.variety,
-        inStock: p.inStock
+        cuttingInStock: p.cuttingInStock,
+        seedlingInStock: p.seedlingInStock
       })
       .from(carts)
       .leftJoin(p, eq(carts.productId, p.id))
@@ -183,7 +185,8 @@ export class CartsService {
         color: item.color,
         taste: item.taste,
         variety: item.variety,
-        inStock: item.inStock,
+        cuttingInStock: item.cuttingInStock,
+        seedlingInStock: item.seedlingInStock,
         imageUrl: productImagesMap[item.productId] || null
       }
 

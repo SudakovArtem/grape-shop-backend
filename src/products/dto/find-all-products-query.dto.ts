@@ -90,6 +90,16 @@ export class FindAllProductsQueryDto {
   @IsIn(VALID_TASTES, { message: 'Недопустимый вкус' })
   taste?: string
 
+  @ApiPropertyOptional({ description: 'Фильтр по наличию черенков', type: Boolean })
+  @IsOptional()
+  @Type(() => Boolean) // Для преобразования из строки, если придет как query param
+  cuttingInStock?: boolean
+
+  @ApiPropertyOptional({ description: 'Фильтр по наличию саженцев', type: Boolean })
+  @IsOptional()
+  @Type(() => Boolean)
+  seedlingInStock?: boolean
+
   // Поиск по ключевым словам
   @ApiPropertyOptional({ description: 'Поисковый запрос', type: String })
   @IsOptional()

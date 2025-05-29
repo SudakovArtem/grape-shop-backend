@@ -8,6 +8,9 @@ import { CreateProductDto } from './dto/create-product.dto' // Импортир�
 import { UpdateProductDto } from './dto/update-product.dto' // Импортируем UpdateProductDto
 import { AwsS3Service } from '../aws/aws-s3.service' // Импортируем AwsS3Service
 import { generateSlug } from '../common/utils/slug.utils'; // Импортируем утилиту для генерации slug
+import { IsIn, IsOptional } from 'class-validator'
+import { ApiPropertyOptional } from '@nestjs/swagger'
+import { Type } from 'class-transformer'
 
 // Повторно определим тип DrizzleDB, если он не экспортируется из другого места глобально
 // или можно было бы вынести его в общий файл типов.
@@ -147,7 +150,9 @@ export class ProductsService {
       color,
       taste,
       search,
-      sortBy = ProductSortBy.CreatedAtDesc
+      sortBy = ProductSortBy.CreatedAtDesc,
+      cuttingInStock,
+      seedlingInStock
     } = queryDto
 
     const offset = (page - 1) * limit
@@ -171,6 +176,14 @@ export class ProductsService {
     }
     if (taste) {
       conditions.push(eq(products.taste, taste))
+    }
+
+    // Фильтр по наличию
+    if (cuttingInStock !== undefined) {
+      conditions.push(eq(products.cuttingInStock, cuttingInStock))
+    }
+    if (seedlingInStock !== undefined) {
+      conditions.push(eq(products.seedlingInStock, seedlingInStock))
     }
 
     // Фильтр по цене (учитывает цену черенка ИЛИ саженца)

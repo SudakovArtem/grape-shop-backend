@@ -897,6 +897,11 @@
                     "description": "Название продукта",
                     "example": "Виноград Кишмиш"
                   },
+                  "slug": {
+                    "type": "string",
+                    "description": "Уникальный идентификатор продукта для URL (генерируется автоматически, если не указан)",
+                    "example": "vinograd-kishmish"
+                  },
                   "description": {
                     "type": "string",
                     "description": "Описание продукта",
@@ -942,10 +947,15 @@
                     "description": "Вкус",
                     "example": "Сладкий"
                   },
-                  "inStock": {
+                  "cuttingInStock": {
                     "type": "boolean",
-                    "description": "В наличии",
-                    "default": true
+                    "description": "В наличии (черенок)",
+                    "default": false
+                  },
+                  "seedlingInStock": {
+                    "type": "boolean",
+                    "description": "В наличии (саженец)",
+                    "default": false
                   }
                 },
                 "required": [
@@ -970,6 +980,10 @@
                     "name": {
                       "type": "string",
                       "description": "Название продукта"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "Уникальный идентификатор продукта для URL"
                     },
                     "description": {
                       "type": "string",
@@ -1021,10 +1035,16 @@
                       "description": "Вкус",
                       "nullable": true
                     },
-                    "inStock": {
+                    "cuttingInStock": {
                       "type": "boolean",
-                      "description": "В наличии",
-                      "default": true,
+                      "description": "В наличии (черенок)",
+                      "default": false,
+                      "nullable": true
+                    },
+                    "seedlingInStock": {
+                      "type": "boolean",
+                      "description": "В наличии (саженец)",
+                      "default": false,
                       "nullable": true
                     },
                     "createdAt": {
@@ -1062,6 +1082,7 @@
                   "required": [
                     "id",
                     "name",
+                    "slug",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -1266,6 +1287,10 @@
                             "type": "string",
                             "description": "Название продукта"
                           },
+                          "slug": {
+                            "type": "string",
+                            "description": "Уникальный идентификатор продукта для URL"
+                          },
                           "description": {
                             "type": "string",
                             "description": "Описание продукта",
@@ -1316,10 +1341,16 @@
                             "description": "Вкус",
                             "nullable": true
                           },
-                          "inStock": {
+                          "cuttingInStock": {
                             "type": "boolean",
-                            "description": "В наличии",
-                            "default": true,
+                            "description": "В наличии (черенок)",
+                            "default": false,
+                            "nullable": true
+                          },
+                          "seedlingInStock": {
+                            "type": "boolean",
+                            "description": "В наличии (саженец)",
+                            "default": false,
                             "nullable": true
                           },
                           "createdAt": {
@@ -1357,6 +1388,7 @@
                         "required": [
                           "id",
                           "name",
+                          "slug",
                           "createdAt",
                           "updatedAt"
                         ]
@@ -1439,6 +1471,10 @@
                       "type": "string",
                       "description": "Название продукта"
                     },
+                    "slug": {
+                      "type": "string",
+                      "description": "Уникальный идентификатор продукта для URL"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Описание продукта",
@@ -1489,10 +1525,16 @@
                       "description": "Вкус",
                       "nullable": true
                     },
-                    "inStock": {
+                    "cuttingInStock": {
                       "type": "boolean",
-                      "description": "В наличии",
-                      "default": true,
+                      "description": "В наличии (черенок)",
+                      "default": false,
+                      "nullable": true
+                    },
+                    "seedlingInStock": {
+                      "type": "boolean",
+                      "description": "В наличии (саженец)",
+                      "default": false,
                       "nullable": true
                     },
                     "createdAt": {
@@ -1530,6 +1572,7 @@
                   "required": [
                     "id",
                     "name",
+                    "slug",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -1585,6 +1628,10 @@
                       "type": "string",
                       "description": "Название продукта"
                     },
+                    "slug": {
+                      "type": "string",
+                      "description": "Уникальный идентификатор продукта для URL"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Описание продукта",
@@ -1635,10 +1682,16 @@
                       "description": "Вкус",
                       "nullable": true
                     },
-                    "inStock": {
+                    "cuttingInStock": {
                       "type": "boolean",
-                      "description": "В наличии",
-                      "default": true,
+                      "description": "В наличии (черенок)",
+                      "default": false,
+                      "nullable": true
+                    },
+                    "seedlingInStock": {
+                      "type": "boolean",
+                      "description": "В наличии (саженец)",
+                      "default": false,
                       "nullable": true
                     },
                     "createdAt": {
@@ -1676,6 +1729,7 @@
                   "required": [
                     "id",
                     "name",
+                    "slug",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -1743,6 +1797,154 @@
         ]
       }
     },
+    "/products/slug/{slug}": {
+      "get": {
+        "operationId": "ProductsController_getProductBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Продукт найден.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID продукта"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Название продукта"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "description": "Уникальный идентификатор продукта для URL"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Описание продукта",
+                      "nullable": true
+                    },
+                    "cuttingPrice": {
+                      "type": "number",
+                      "description": "Цена за черенок",
+                      "nullable": true
+                    },
+                    "seedlingPrice": {
+                      "type": "number",
+                      "description": "Цена за саженец",
+                      "nullable": true
+                    },
+                    "categoryId": {
+                      "type": "number",
+                      "description": "ID категории",
+                      "nullable": true
+                    },
+                    "categoryName": {
+                      "type": "string",
+                      "description": "Название категории",
+                      "nullable": true
+                    },
+                    "variety": {
+                      "type": "string",
+                      "description": "Сорт",
+                      "nullable": true
+                    },
+                    "maturationPeriod": {
+                      "type": "string",
+                      "description": "Срок созревания",
+                      "nullable": true
+                    },
+                    "berryShape": {
+                      "type": "string",
+                      "description": "Форма ягоды",
+                      "nullable": true
+                    },
+                    "color": {
+                      "type": "string",
+                      "description": "Цвет ягоды",
+                      "nullable": true
+                    },
+                    "taste": {
+                      "type": "string",
+                      "description": "Вкус",
+                      "nullable": true
+                    },
+                    "cuttingInStock": {
+                      "type": "boolean",
+                      "description": "В наличии (черенок)",
+                      "default": false,
+                      "nullable": true
+                    },
+                    "seedlingInStock": {
+                      "type": "boolean",
+                      "description": "В наличии (саженец)",
+                      "default": false,
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата создания"
+                    },
+                    "updatedAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата обновления"
+                    },
+                    "images": {
+                      "description": "Список изображений продукта",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID изображения"
+                          },
+                          "url": {
+                            "type": "string",
+                            "description": "URL изображения"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "url"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Продукт с таким SLUG не найден."
+          }
+        },
+        "summary": "Получить продукт по SLUG",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
     "/products/{productId}/images": {
       "post": {
         "operationId": "ProductsController_addProductImage",
@@ -1801,6 +2003,10 @@
                       "type": "string",
                       "description": "Название продукта"
                     },
+                    "slug": {
+                      "type": "string",
+                      "description": "Уникальный идентификатор продукта для URL"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Описание продукта",
@@ -1851,10 +2057,16 @@
                       "description": "Вкус",
                       "nullable": true
                     },
-                    "inStock": {
+                    "cuttingInStock": {
                       "type": "boolean",
-                      "description": "В наличии",
-                      "default": true,
+                      "description": "В наличии (черенок)",
+                      "default": false,
+                      "nullable": true
+                    },
+                    "seedlingInStock": {
+                      "type": "boolean",
+                      "description": "В наличии (саженец)",
+                      "default": false,
                       "nullable": true
                     },
                     "createdAt": {
@@ -1892,6 +2104,7 @@
                   "required": [
                     "id",
                     "name",
+                    "slug",
                     "createdAt",
                     "updatedAt"
                   ]
@@ -2014,37 +2227,21 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "number",
-                      "description": "ID элемента корзины"
+                    "items": {
+                      "description": "Список товаров в корзине",
+                      "items": {
+                        "type": "array"
+                      },
+                      "type": "array"
                     },
-                    "userId": {
+                    "totalCartPrice": {
                       "type": "number",
-                      "description": "ID пользователя"
-                    },
-                    "productId": {
-                      "type": "number",
-                      "description": "ID продукта"
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Тип товара (черенок или саженец)",
-                      "enum": [
-                        "cutting",
-                        "seedling"
-                      ]
-                    },
-                    "quantity": {
-                      "type": "number",
-                      "description": "Количество товара"
+                      "description": "Общая стоимость всех товаров в корзине"
                     }
                   },
                   "required": [
-                    "id",
-                    "userId",
-                    "productId",
-                    "type",
-                    "quantity"
+                    "items",
+                    "totalCartPrice"
                   ]
                 }
               }
@@ -2230,8 +2427,32 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Товар успешно удален из корзины."
+          "200": {
+            "description": "Корзина после удаления товара.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Список товаров в корзине",
+                      "items": {
+                        "type": "array"
+                      },
+                      "type": "array"
+                    },
+                    "totalCartPrice": {
+                      "type": "number",
+                      "description": "Общая стоимость всех товаров в корзине"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "totalCartPrice"
+                  ]
+                }
+              }
+            }
           },
           "401": {
             "description": "Пользователь не авторизован."
@@ -4989,6 +5210,11 @@
             "description": "Название продукта",
             "example": "Виноград Кишмиш"
           },
+          "slug": {
+            "type": "string",
+            "description": "Уникальный идентификатор продукта для URL (генерируется автоматически, если не указан)",
+            "example": "vinograd-kishmish"
+          },
           "description": {
             "type": "string",
             "description": "Описание продукта",
@@ -5034,10 +5260,15 @@
             "description": "Вкус",
             "example": "Сладкий"
           },
-          "inStock": {
+          "cuttingInStock": {
             "type": "boolean",
-            "description": "В наличии",
-            "default": true
+            "description": "В наличии (черенок)",
+            "default": false
+          },
+          "seedlingInStock": {
+            "type": "boolean",
+            "description": "В наличии (саженец)",
+            "default": false
           }
         },
         "required": [
@@ -5071,6 +5302,10 @@
           "name": {
             "type": "string",
             "description": "Название продукта"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Уникальный идентификатор продукта для URL"
           },
           "description": {
             "type": "string",
@@ -5122,10 +5357,16 @@
             "description": "Вкус",
             "nullable": true
           },
-          "inStock": {
+          "cuttingInStock": {
             "type": "boolean",
-            "description": "В наличии",
-            "default": true,
+            "description": "В наличии (черенок)",
+            "default": false,
+            "nullable": true
+          },
+          "seedlingInStock": {
+            "type": "boolean",
+            "description": "В наличии (саженец)",
+            "default": false,
             "nullable": true
           },
           "createdAt": {
@@ -5163,6 +5404,7 @@
         "required": [
           "id",
           "name",
+          "slug",
           "createdAt",
           "updatedAt"
         ]
@@ -5183,6 +5425,10 @@
                 "name": {
                   "type": "string",
                   "description": "Название продукта"
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "Уникальный идентификатор продукта для URL"
                 },
                 "description": {
                   "type": "string",
@@ -5234,10 +5480,16 @@
                   "description": "Вкус",
                   "nullable": true
                 },
-                "inStock": {
+                "cuttingInStock": {
                   "type": "boolean",
-                  "description": "В наличии",
-                  "default": true,
+                  "description": "В наличии (черенок)",
+                  "default": false,
+                  "nullable": true
+                },
+                "seedlingInStock": {
+                  "type": "boolean",
+                  "description": "В наличии (саженец)",
+                  "default": false,
                   "nullable": true
                 },
                 "createdAt": {
@@ -5275,6 +5527,7 @@
               "required": [
                 "id",
                 "name",
+                "slug",
                 "createdAt",
                 "updatedAt"
               ]
@@ -5351,6 +5604,40 @@
           "type"
         ]
       },
+      "CartDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Список товаров в корзине",
+            "items": {
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "totalCartPrice": {
+            "type": "number",
+            "description": "Общая стоимость всех товаров в корзине"
+          }
+        },
+        "required": [
+          "items",
+          "totalCartPrice"
+        ]
+      },
+      "UpdateCartItemDto": {
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "type": "number",
+            "description": "Новое количество товара в корзине",
+            "minimum": 1,
+            "example": 2
+          }
+        },
+        "required": [
+          "quantity"
+        ]
+      },
       "BaseCartItemDto": {
         "type": "object",
         "properties": {
@@ -5384,40 +5671,6 @@
           "userId",
           "productId",
           "type",
-          "quantity"
-        ]
-      },
-      "CartDetailsResponseDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "description": "Список товаров в корзине",
-            "items": {
-              "type": "array"
-            },
-            "type": "array"
-          },
-          "totalCartPrice": {
-            "type": "number",
-            "description": "Общая стоимость всех товаров в корзине"
-          }
-        },
-        "required": [
-          "items",
-          "totalCartPrice"
-        ]
-      },
-      "UpdateCartItemDto": {
-        "type": "object",
-        "properties": {
-          "quantity": {
-            "type": "number",
-            "description": "Новое количество товара в корзине",
-            "minimum": 1,
-            "example": 2
-          }
-        },
-        "required": [
           "quantity"
         ]
       },

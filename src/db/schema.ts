@@ -117,3 +117,29 @@ export const articles = pgTable('articles', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 })
+
+export const paymentStatusEnum = pgEnum('payment_status_enum', [
+  'pending',
+  'waiting_for_capture',
+  'succeeded',
+  'canceled'
+])
+
+export const payments = pgTable('payments', {
+  id: serial('id').primaryKey(),
+  yookassaPaymentId: varchar('yookassa_payment_id', { length: 255 }).notNull().unique(), // ID платежа в YooKassa
+  orderId: integer('order_id').references(() => orders.id),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  currency: varchar('currency', { length: 3 }).notNull().default('RUB'),
+  status: paymentStatusEnum('status').notNull().default('pending'),
+  paid: boolean('paid').default(false),
+  description: text('description'),
+  confirmationUrl: varchar('confirmation_url', { length: 512 }), // URL для подтверждения платежа
+  metadata: text('metadata'), // JSON строка с метаданными
+  test: boolean('test').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+})

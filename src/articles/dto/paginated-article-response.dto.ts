@@ -4,7 +4,7 @@ import { ArticleResponseDto } from './article-response.dto'
 export class PaginatedArticleResponseDto {
   @ApiProperty({
     description: 'Массив статей',
-    type: [ArticleResponseDto]
+    type: () => [ArticleResponseDto]
   })
   data: ArticleResponseDto[]
 

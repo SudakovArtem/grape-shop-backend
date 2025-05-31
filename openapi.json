@@ -4877,6 +4877,241 @@
           "Article Categories"
         ]
       }
+    },
+    "/payment/create": {
+      "post": {
+        "operationId": "PaymentController_createPayment",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "example": "1000.00",
+                    "description": "Сумма платежа в рублях"
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "example": "order-123",
+                    "description": "Идентификатор заказа"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "example": "user-456",
+                    "description": "Идентификатор пользователя"
+                  }
+                },
+                "required": [
+                  "value",
+                  "orderId",
+                  "userId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Payment"
+        ]
+      }
+    },
+    "/payment/notifications": {
+      "post": {
+        "operationId": "PaymentController_handleNotification",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "notification",
+                    "description": "Тип события"
+                  },
+                  "event": {
+                    "type": "string",
+                    "example": "payment.succeeded",
+                    "description": "Событие платежа",
+                    "enum": [
+                      "payment.succeeded",
+                      "payment.waiting_for_capture",
+                      "payment.canceled",
+                      "refund.succeeded"
+                    ]
+                  },
+                  "object": {
+                    "description": "Объект платежа",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "example": "payment-id-123",
+                            "description": "Идентификатор платежа"
+                          },
+                          "status": {
+                            "type": "string",
+                            "example": "succeeded",
+                            "description": "Статус платежа",
+                            "enum": [
+                              "pending",
+                              "waiting_for_capture",
+                              "succeeded",
+                              "canceled"
+                            ]
+                          },
+                          "paid": {
+                            "type": "boolean",
+                            "example": false,
+                            "description": "Флаг оплаченного платежа"
+                          },
+                          "amount": {
+                            "description": "Сумма платежа",
+                            "allOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string",
+                                    "example": "1000.00",
+                                    "description": "Сумма платежа"
+                                  },
+                                  "currency": {
+                                    "type": "string",
+                                    "example": "RUB",
+                                    "description": "Валюта платежа"
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "currency"
+                                ]
+                              }
+                            ]
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "example": "2024-01-15T10:30:00.000Z",
+                            "description": "Время создания платежа"
+                          },
+                          "description": {
+                            "type": "string",
+                            "example": "Оплата заказа №123",
+                            "description": "Описание платежа"
+                          },
+                          "confirmation": {
+                            "description": "Данные для подтверждения платежа",
+                            "allOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "example": "redirect",
+                                    "description": "Тип подтверждения"
+                                  },
+                                  "confirmation_url": {
+                                    "type": "string",
+                                    "example": "https://yoomoney.ru/checkout/payments/v2/contract/123",
+                                    "description": "URL для подтверждения платежа"
+                                  },
+                                  "return_url": {
+                                    "type": "string",
+                                    "example": "https://example.com/return",
+                                    "description": "URL возврата"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "confirmation_url",
+                                  "return_url"
+                                ]
+                              }
+                            ]
+                          },
+                          "metadata": {
+                            "type": "object",
+                            "example": {
+                              "orderId": "order-123",
+                              "userId": "user-456"
+                            },
+                            "description": "Метаданные платежа"
+                          },
+                          "test": {
+                            "type": "boolean",
+                            "example": true,
+                            "description": "Тестовый платеж"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "status",
+                          "paid",
+                          "amount",
+                          "created_at",
+                          "description",
+                          "confirmation",
+                          "metadata",
+                          "test"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "event",
+                  "object"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Payment"
+        ]
+      }
+    },
+    "/payment/status/{paymentId}": {
+      "get": {
+        "operationId": "PaymentController_getPaymentStatus",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Payment"
+        ]
+      }
     }
   },
   "info": {
@@ -6262,6 +6497,334 @@
             "example": "sovety-po-vyraschivaniyu"
           }
         }
+      },
+      "CreatePaymentRequestDto": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "example": "1000.00",
+            "description": "Сумма платежа в рублях"
+          },
+          "orderId": {
+            "type": "string",
+            "example": "order-123",
+            "description": "Идентификатор заказа"
+          },
+          "userId": {
+            "type": "string",
+            "example": "user-456",
+            "description": "Идентификатор пользователя"
+          }
+        },
+        "required": [
+          "value",
+          "orderId",
+          "userId"
+        ]
+      },
+      "PaymentAmountDto": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "example": "1000.00",
+            "description": "Сумма платежа"
+          },
+          "currency": {
+            "type": "string",
+            "example": "RUB",
+            "description": "Валюта платежа"
+          }
+        },
+        "required": [
+          "value",
+          "currency"
+        ]
+      },
+      "PaymentConfirmationDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "redirect",
+            "description": "Тип подтверждения"
+          },
+          "confirmation_url": {
+            "type": "string",
+            "example": "https://yoomoney.ru/checkout/payments/v2/contract/123",
+            "description": "URL для подтверждения платежа"
+          },
+          "return_url": {
+            "type": "string",
+            "example": "https://example.com/return",
+            "description": "URL возврата"
+          }
+        },
+        "required": [
+          "type",
+          "confirmation_url",
+          "return_url"
+        ]
+      },
+      "PaymentObjectDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "payment-id-123",
+            "description": "Идентификатор платежа"
+          },
+          "status": {
+            "type": "string",
+            "example": "succeeded",
+            "description": "Статус платежа",
+            "enum": [
+              "pending",
+              "waiting_for_capture",
+              "succeeded",
+              "canceled"
+            ]
+          },
+          "paid": {
+            "type": "boolean",
+            "example": false,
+            "description": "Флаг оплаченного платежа"
+          },
+          "amount": {
+            "description": "Сумма платежа",
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "example": "1000.00",
+                    "description": "Сумма платежа"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "example": "RUB",
+                    "description": "Валюта платежа"
+                  }
+                },
+                "required": [
+                  "value",
+                  "currency"
+                ]
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z",
+            "description": "Время создания платежа"
+          },
+          "description": {
+            "type": "string",
+            "example": "Оплата заказа №123",
+            "description": "Описание платежа"
+          },
+          "confirmation": {
+            "description": "Данные для подтверждения платежа",
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "redirect",
+                    "description": "Тип подтверждения"
+                  },
+                  "confirmation_url": {
+                    "type": "string",
+                    "example": "https://yoomoney.ru/checkout/payments/v2/contract/123",
+                    "description": "URL для подтверждения платежа"
+                  },
+                  "return_url": {
+                    "type": "string",
+                    "example": "https://example.com/return",
+                    "description": "URL возврата"
+                  }
+                },
+                "required": [
+                  "type",
+                  "confirmation_url",
+                  "return_url"
+                ]
+              }
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "example": {
+              "orderId": "order-123",
+              "userId": "user-456"
+            },
+            "description": "Метаданные платежа"
+          },
+          "test": {
+            "type": "boolean",
+            "example": true,
+            "description": "Тестовый платеж"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "paid",
+          "amount",
+          "created_at",
+          "description",
+          "confirmation",
+          "metadata",
+          "test"
+        ]
+      },
+      "YooKassaNotificationDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "notification",
+            "description": "Тип события"
+          },
+          "event": {
+            "type": "string",
+            "example": "payment.succeeded",
+            "description": "Событие платежа",
+            "enum": [
+              "payment.succeeded",
+              "payment.waiting_for_capture",
+              "payment.canceled",
+              "refund.succeeded"
+            ]
+          },
+          "object": {
+            "description": "Объект платежа",
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "example": "payment-id-123",
+                    "description": "Идентификатор платежа"
+                  },
+                  "status": {
+                    "type": "string",
+                    "example": "succeeded",
+                    "description": "Статус платежа",
+                    "enum": [
+                      "pending",
+                      "waiting_for_capture",
+                      "succeeded",
+                      "canceled"
+                    ]
+                  },
+                  "paid": {
+                    "type": "boolean",
+                    "example": false,
+                    "description": "Флаг оплаченного платежа"
+                  },
+                  "amount": {
+                    "description": "Сумма платежа",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "string",
+                            "example": "1000.00",
+                            "description": "Сумма платежа"
+                          },
+                          "currency": {
+                            "type": "string",
+                            "example": "RUB",
+                            "description": "Валюта платежа"
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "currency"
+                        ]
+                      }
+                    ]
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00.000Z",
+                    "description": "Время создания платежа"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Оплата заказа №123",
+                    "description": "Описание платежа"
+                  },
+                  "confirmation": {
+                    "description": "Данные для подтверждения платежа",
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "example": "redirect",
+                            "description": "Тип подтверждения"
+                          },
+                          "confirmation_url": {
+                            "type": "string",
+                            "example": "https://yoomoney.ru/checkout/payments/v2/contract/123",
+                            "description": "URL для подтверждения платежа"
+                          },
+                          "return_url": {
+                            "type": "string",
+                            "example": "https://example.com/return",
+                            "description": "URL возврата"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "confirmation_url",
+                          "return_url"
+                        ]
+                      }
+                    ]
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "example": {
+                      "orderId": "order-123",
+                      "userId": "user-456"
+                    },
+                    "description": "Метаданные платежа"
+                  },
+                  "test": {
+                    "type": "boolean",
+                    "example": true,
+                    "description": "Тестовый платеж"
+                  }
+                },
+                "required": [
+                  "id",
+                  "status",
+                  "paid",
+                  "amount",
+                  "created_at",
+                  "description",
+                  "confirmation",
+                  "metadata",
+                  "test"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "event",
+          "object"
+        ]
       }
     }
   }

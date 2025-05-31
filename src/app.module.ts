@@ -14,6 +14,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'
 import { DbModule } from './db/db.module'
 import { ArticlesModule } from './articles/articles.module'
 import { ArticleCategoriesModule } from './article-categories/article-categories.module'
+import { PaymentModule } from './payment/payment.module'
 
 @Module({
   imports: [
@@ -35,7 +36,8 @@ import { ArticleCategoriesModule } from './article-categories/article-categories
     UploadsModule,
     DbModule,
     ArticlesModule,
-    ArticleCategoriesModule
+    ArticleCategoriesModule,
+    PaymentModule
   ],
   providers: [
     {

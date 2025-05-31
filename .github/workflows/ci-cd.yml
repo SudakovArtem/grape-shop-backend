@@ -73,6 +73,9 @@ jobs:
           STORAGE_PUBLIC_BASE_URL=${{ secrets.STORAGE_PUBLIC_BASE_URL }}
           MAIL_TRANSPORT=${{ secrets.MAIL_TRANSPORT }}
           MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }}
+          YOUKASSA_SHOP_ID=${{ secrets.YOUKASSA_SHOP_ID }}
+          YOUKASSA_SECRET_KEY=${{ secrets.YOUKASSA_SECRET_KEY }}
+          YOUKASSA_RETURN_URL=${{ secrets.YOUKASSA_RETURN_URL }}
           EOL
 
       - name: Copy files to VM

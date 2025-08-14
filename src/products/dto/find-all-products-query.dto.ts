@@ -51,6 +51,24 @@ export class FindAllProductsQueryDto {
   @IsInt({ message: 'ID категории должен быть целым числом' })
   categoryId?: number
 
+  @ApiPropertyOptional({
+    description: 'ID продуктов для исключения из результатов (может быть массивом)',
+    type: 'number',
+    isArray: true,
+    example: [1, 5, 10]
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => Number(v))
+    }
+    return [Number(value)]
+  })
+  @IsArray()
+  @Type(() => Number)
+  @IsInt({ each: true, message: 'ID для исключения должен быть целым числом' })
+  exclude?: number[]
+
   @ApiPropertyOptional({ description: 'Минимальная цена', type: Number })
   @IsOptional()
   @Type(() => Number)

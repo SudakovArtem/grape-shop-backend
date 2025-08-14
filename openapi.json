@@ -1145,6 +1145,23 @@
             }
           },
           {
+            "name": "exclude",
+            "required": false,
+            "in": "query",
+            "description": "ID продуктов для исключения из результатов (может быть массивом)",
+            "schema": {
+              "example": [
+                1,
+                5,
+                10
+              ],
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          {
             "name": "minPrice",
             "required": false,
             "in": "query",

@@ -2,7 +2,22 @@ import { Inject, Injectable, NotFoundException, ConflictException, InternalServe
 import { DRIZZLE_PROVIDER_TOKEN } from '../db/constants'
 import { db } from '../db' // Предполагается, что db экспортируется из этого пути
 import { products, categories, productImages, carts, orderItems } from '../db/schema' // Импортируем нужные схемы
-import { eq, sql, and, or, gte, lte, ilike, SQL, getTableColumns, countDistinct, asc, desc, inArray } from 'drizzle-orm' // Импортируем eq, sql, and, or, gte, lte, ilike, SQL, getTableColumns, countDistinct, asc, desc, inArray
+import {
+  eq,
+  sql,
+  and,
+  or,
+  gte,
+  lte,
+  ilike,
+  SQL,
+  getTableColumns,
+  countDistinct,
+  asc,
+  desc,
+  inArray,
+  notInArray
+} from 'drizzle-orm'
 import { FindAllProductsQueryDto, ProductSortBy } from './dto/find-all-products-query.dto' // Импортируем DTO и ProductSortBy
 import { CreateProductDto } from './dto/create-product.dto' // Импортируем CreateProductDto
 import { UpdateProductDto } from './dto/update-product.dto' // Импортируем UpdateProductDto
@@ -139,6 +154,7 @@ export class ProductsService {
       page = 1,
       limit = 10,
       categoryId,
+      exclude,
       minPrice,
       maxPrice,
       variety,
@@ -157,6 +173,9 @@ export class ProductsService {
 
     if (categoryId) {
       conditions.push(eq(products.categoryId, categoryId))
+    }
+    if (exclude && exclude.length > 0) {
+      conditions.push(notInArray(products.id, exclude))
     }
     if (variety) {
       // Поиск по сорту (можно использовать ilike для регистронезависимого поиска)

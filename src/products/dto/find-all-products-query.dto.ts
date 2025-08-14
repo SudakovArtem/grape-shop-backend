@@ -1,5 +1,5 @@
-import { Type } from 'class-transformer'
-import { IsOptional, IsInt, Min, Max, IsString, IsNumber, IsIn, IsEnum } from 'class-validator'
+import { Type, Transform } from 'class-transformer'
+import { IsOptional, IsInt, Min, Max, IsString, IsNumber, IsIn, IsEnum, IsArray } from 'class-validator'
 import { ApiPropertyOptional } from '@nestjs/swagger'
 
 // Допустимые значения для полей фильтрации (можно вынести в константы или enum)
@@ -70,25 +70,57 @@ export class FindAllProductsQueryDto {
   @IsString({ message: 'Сорт должен быть строкой' })
   variety?: string
 
-  @ApiPropertyOptional({ description: 'Срок созревания', enum: VALID_MATURATION_PERIODS, type: String })
+  @ApiPropertyOptional({
+    description: 'Срок созревания (может быть массивом)',
+    enum: VALID_MATURATION_PERIODS,
+    type: [String],
+    isArray: true,
+    example: ['Ранний', 'Средний']
+  })
   @IsOptional()
-  @IsIn(VALID_MATURATION_PERIODS, { message: 'Недопустимый срок созревания' })
-  maturationPeriod?: string
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]) as string[])
+  @IsArray()
+  @IsIn(VALID_MATURATION_PERIODS, { each: true, message: 'Недопустимый срок созревания' })
+  maturationPeriod?: string[]
 
-  @ApiPropertyOptional({ description: 'Форма ягоды', enum: VALID_BERRY_SHAPES, type: String })
+  @ApiPropertyOptional({
+    description: 'Форма ягоды (может быть массивом)',
+    enum: VALID_BERRY_SHAPES,
+    type: [String],
+    isArray: true,
+    example: ['Овальная', 'Пальцевидная']
+  })
   @IsOptional()
-  @IsIn(VALID_BERRY_SHAPES, { message: 'Недопустимая форма ягоды' })
-  berryShape?: string
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]) as string[])
+  @IsArray()
+  @IsIn(VALID_BERRY_SHAPES, { each: true, message: 'Недопустимая форма ягоды' })
+  berryShape?: string[]
 
-  @ApiPropertyOptional({ description: 'Цвет', enum: VALID_COLORS, type: String })
+  @ApiPropertyOptional({
+    description: 'Цвет (может быть массивом)',
+    enum: VALID_COLORS,
+    type: [String],
+    isArray: true,
+    example: ['Желтый', 'Красный']
+  })
   @IsOptional()
-  @IsIn(VALID_COLORS, { message: 'Недопустимый цвет' })
-  color?: string
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]) as string[])
+  @IsArray()
+  @IsIn(VALID_COLORS, { each: true, message: 'Недопустимый цвет' })
+  color?: string[]
 
-  @ApiPropertyOptional({ description: 'Вкус', enum: VALID_TASTES, type: String })
+  @ApiPropertyOptional({
+    description: 'Вкус (может быть массивом)',
+    enum: VALID_TASTES,
+    type: [String],
+    isArray: true,
+    example: ['Гармоничный', 'Мускатный']
+  })
   @IsOptional()
-  @IsIn(VALID_TASTES, { message: 'Недопустимый вкус' })
-  taste?: string
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]) as string[])
+  @IsArray()
+  @IsIn(VALID_TASTES, { each: true, message: 'Недопустимый вкус' })
+  taste?: string[]
 
   @ApiPropertyOptional({ description: 'Минимальное количество черенков в наличии', type: Number })
   @IsOptional()

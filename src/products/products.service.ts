@@ -2,12 +2,12 @@ import { Inject, Injectable, NotFoundException, ConflictException, InternalServe
 import { DRIZZLE_PROVIDER_TOKEN } from '../db/constants'
 import { db } from '../db' // Предполагается, что db экспортируется из этого пути
 import { products, categories, productImages, carts, orderItems } from '../db/schema' // Импортируем нужные схемы
-import { eq, sql, and, or, gte, lte, ilike, SQL, getTableColumns, countDistinct, asc, desc } from 'drizzle-orm' // Импортируем eq, sql, and, or, gte, lte, ilike, SQL, getTableColumns, countDistinct, asc, desc
+import { eq, sql, and, or, gte, lte, ilike, SQL, getTableColumns, countDistinct, asc, desc, inArray } from 'drizzle-orm' // Импортируем eq, sql, and, or, gte, lte, ilike, SQL, getTableColumns, countDistinct, asc, desc, inArray
 import { FindAllProductsQueryDto, ProductSortBy } from './dto/find-all-products-query.dto' // Импортируем DTO и ProductSortBy
 import { CreateProductDto } from './dto/create-product.dto' // Импортируем CreateProductDto
 import { UpdateProductDto } from './dto/update-product.dto' // Импортируем UpdateProductDto
 import { AwsS3Service } from '../aws/aws-s3.service' // Импортируем AwsS3Service
-import { generateSlug } from '../common/utils/slug.utils'; // Импортируем утилиту для генерации slug
+import { generateSlug } from '../common/utils/slug.utils' // Импортируем утилиту для генерации slug
 
 // Повторно определим тип DrizzleDB, если он не экспортируется из другого места глобально
 // или можно было бы вынести его в общий файл типов.
@@ -41,13 +41,13 @@ export class ProductsService {
 
     let counter = 1
     while (existingProductWithSlug.length > 0) {
-      productSlug = `${generateSlug(createProductDto.name)}-${counter}`;
+      productSlug = `${generateSlug(createProductDto.name)}-${counter}`
       existingProductWithSlug = await this.drizzle
         .select({ id: products.id })
         .from(products)
         .where(eq(products.slug, productSlug))
         .limit(1)
-      counter++;
+      counter++
     }
 
     const newProductData: typeof products.$inferInsert = {
@@ -162,17 +162,17 @@ export class ProductsService {
       // Поиск по сорту (можно использовать ilike для регистронезависимого поиска)
       conditions.push(ilike(products.variety, `%${variety}%`))
     }
-    if (maturationPeriod) {
-      conditions.push(eq(products.maturationPeriod, maturationPeriod))
+    if (maturationPeriod && maturationPeriod.length > 0) {
+      conditions.push(inArray(products.maturationPeriod, maturationPeriod))
     }
-    if (berryShape) {
-      conditions.push(eq(products.berryShape, berryShape))
+    if (berryShape && berryShape.length > 0) {
+      conditions.push(inArray(products.berryShape, berryShape))
     }
-    if (color) {
-      conditions.push(eq(products.color, color))
+    if (color && color.length > 0) {
+      conditions.push(inArray(products.color, color))
     }
-    if (taste) {
-      conditions.push(eq(products.taste, taste))
+    if (taste && taste.length > 0) {
+      conditions.push(inArray(products.taste, taste))
     }
 
     // Фильтр по наличию

@@ -2247,7 +2247,17 @@
     "/cart": {
       "post": {
         "operationId": "CartsController_addItem",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Guest-Id",
+            "in": "header",
+            "description": "ID гостевой сессии (обязательно для неавторизованных пользователей)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2313,10 +2323,7 @@
             }
           },
           "400": {
-            "description": "Неверные данные для добавления/обновления товара."
-          },
-          "401": {
-            "description": "Пользователь не авторизован."
+            "description": "Неверные данные для добавления/обновления товара или отсутствует авторизация/guest-id."
           },
           "404": {
             "description": "Продукт не найден."
@@ -2334,7 +2341,17 @@
       },
       "get": {
         "operationId": "CartsController_getCart",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Guest-Id",
+            "in": "header",
+            "description": "ID гостевой сессии (обязательно для неавторизованных пользователей)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Содержимое корзины.",
@@ -2363,8 +2380,8 @@
               }
             }
           },
-          "401": {
-            "description": "Пользователь не авторизован."
+          "400": {
+            "description": "Отсутствует авторизация или guest-id."
           }
         },
         "security": [
@@ -2372,7 +2389,7 @@
             "bearer": []
           }
         ],
-        "summary": "Получить содержимое корзины пользователя",
+        "summary": "Получить содержимое корзины пользователя/гостя",
         "tags": [
           "Cart"
         ]
@@ -2388,6 +2405,15 @@
             "in": "path",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "X-Guest-Id",
+            "in": "header",
+            "description": "ID гостевой сессии (обязательно для неавторизованных пользователей)",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -2457,10 +2483,7 @@
             }
           },
           "400": {
-            "description": "Неверные данные для обновления (например, quantity < 1)."
-          },
-          "401": {
-            "description": "Пользователь не авторизован."
+            "description": "Неверные данные для обновления (например, quantity < 1) или отсутствует авторизация/guest-id."
           },
           "403": {
             "description": "Попытка изменить чужой элемент корзины."
@@ -2488,6 +2511,15 @@
             "in": "path",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "X-Guest-Id",
+            "in": "header",
+            "description": "ID гостевой сессии (обязательно для неавторизованных пользователей)",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -2519,8 +2551,8 @@
               }
             }
           },
-          "401": {
-            "description": "Пользователь не авторизован."
+          "400": {
+            "description": "Отсутствует авторизация или guest-id."
           },
           "403": {
             "description": "Попытка удалить чужой элемент корзины."
@@ -2535,6 +2567,77 @@
           }
         ],
         "summary": "Удалить товар из корзины",
+        "tags": [
+          "Cart"
+        ]
+      }
+    },
+    "/cart/migrate-guest-cart": {
+      "post": {
+        "operationId": "CartsController_migrateGuestCart",
+        "parameters": [
+          {
+            "name": "X-Guest-Id",
+            "in": "header",
+            "description": "ID гостевой сессии для переноса",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Корзина успешно перенесена."
+          },
+          "400": {
+            "description": "Отсутствует guest-id."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Перенести корзину гостя авторизованному пользователю",
+        "tags": [
+          "Cart"
+        ]
+      }
+    },
+    "/cart/migrate-guest-data": {
+      "post": {
+        "operationId": "CartsController_migrateGuestData",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Данные гостя успешно перенесены.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "migratedCart": {
+                      "type": "boolean"
+                    },
+                    "linkedOrders": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Перенести корзину и заказы гостя по email авторизованному пользователю",
         "tags": [
           "Cart"
         ]
@@ -2765,7 +2868,17 @@
     "/orders": {
       "post": {
         "operationId": "OrdersController_createOrder",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Guest-Id",
+            "in": "header",
+            "description": "ID гостевой сессии (обязательно для неавторизованных пользователей)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Заказ успешно создан.",
@@ -2865,10 +2978,7 @@
             }
           },
           "400": {
-            "description": "Корзина пуста или ошибка при создании заказа."
-          },
-          "401": {
-            "description": "Пользователь не авторизован."
+            "description": "Корзина пуста, отсутствует авторизация/guest-id или неверные данные."
           }
         },
         "security": [
@@ -2876,7 +2986,7 @@
             "bearer": []
           }
         ],
-        "summary": "Создать новый заказ из корзины текущего пользователя",
+        "summary": "Создать новый заказ из корзины (для авторизованных пользователей и гостей)",
         "tags": [
           "Orders"
         ]
@@ -3352,6 +3462,44 @@
           }
         ],
         "summary": "Отменить заказ",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/orders/link-guest-orders": {
+      "post": {
+        "operationId": "OrdersController_linkGuestOrders",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Заказы успешно связаны.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "linkedOrdersCount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Пользователь не авторизован."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Связать гостевые заказы с текущим пользователем по email",
         "tags": [
           "Orders"
         ]

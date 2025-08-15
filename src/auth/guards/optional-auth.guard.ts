@@ -13,13 +13,14 @@ export class OptionalAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context)
   }
 
-  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handleRequest<TUser = any>(err: any, user: any, info: any, context: ExecutionContext, status?: any): TUser {
     // Если произошла ошибка аутентификации или пользователь не найден,
     // просто возвращаем undefined (не выбрасываем исключение)
     // Это позволяет запросу продолжиться без авторизации
     if (err || !user) {
-      return undefined
+      return undefined as TUser
     }
-    return user
+    return user as TUser
   }
 }

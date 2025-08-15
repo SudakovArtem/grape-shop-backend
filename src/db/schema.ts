@@ -54,14 +54,14 @@ export const users = pgTable('users', {
 
 export const carts = pgTable('carts', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id')
-    .references(() => users.id, { onDelete: 'cascade' })
-    .notNull(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  guestId: varchar('guest_id', { length: 255 }), // Для неавторизованных пользователей
   productId: integer('product_id')
     .references(() => products.id)
     .notNull(),
   type: varchar('type', { length: 20 }).notNull(), // 'cutting' or 'seedling'
-  quantity: integer('quantity').notNull()
+  quantity: integer('quantity').notNull(),
+  createdAt: timestamp('created_at').defaultNow()
   // total_price в ТЗ указан для корзины, но обычно он рассчитывается на лету или при оформлении заказа.
   // Пока не будем его добавлять в таблицу carts, чтобы избежать денормализации и необходимости обновлять его при каждом изменении.
   // Если потребуется, можно будет добавить позже или рассчитывать в сервисе.
@@ -69,9 +69,9 @@ export const carts = pgTable('carts', {
 
 export const orders = pgTable('orders', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id')
-    .references(() => users.id, { onDelete: 'cascade' })
-    .notNull(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  guestId: varchar('guest_id', { length: 255 }), // Для неавторизованных пользователей
+  guestEmail: varchar('guest_email', { length: 255 }), // Email гостя для уведомлений
   totalPrice: decimal('total_price', { precision: 10, scale: 2 }).notNull(),
   status: varchar('status', { length: 50 }).notNull(), // "Создан", "В обработке", "Отправлен", "Доставлен", "Отменен"
   createdAt: timestamp('created_at').defaultNow()
@@ -125,13 +125,22 @@ export const paymentStatusEnum = pgEnum('payment_status_enum', [
   'canceled'
 ])
 
+// Таблица для хранения сессий гостевых пользователей
+export const guestSessions = pgTable('guest_sessions', {
+  id: serial('id').primaryKey(),
+  guestId: varchar('guest_id', { length: 255 }).notNull().unique(),
+  ipAddress: varchar('ip_address', { length: 45 }), // Поддержка IPv6
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').defaultNow(),
+  expiresAt: timestamp('expires_at').notNull() // Время истечения сессии (например, 30 дней)
+})
+
 export const payments = pgTable('payments', {
   id: serial('id').primaryKey(),
   yookassaPaymentId: varchar('yookassa_payment_id', { length: 255 }).notNull().unique(), // ID платежа в YooKassa
   orderId: integer('order_id').references(() => orders.id),
-  userId: integer('user_id')
-    .references(() => users.id)
-    .notNull(),
+  userId: integer('user_id').references(() => users.id),
+  guestId: varchar('guest_id', { length: 255 }), // Для неавторизованных пользователей
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
   currency: varchar('currency', { length: 3 }).notNull().default('RUB'),
   status: paymentStatusEnum('status').notNull().default('pending'),

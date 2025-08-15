@@ -14,7 +14,7 @@ export type DrizzleDB = typeof db
 export type CartItem = typeof carts.$inferSelect
 
 // Экспортируем интерфейсы
-export interface CartItemWithProductDetails extends CartItem {
+export interface CartItemWithProductDetails extends Omit<CartItem, 'type'> {
   productName: string | null
   unitPrice: number // Цена за единицу (черенок или саженец)
   itemTotalPrice: number // quantity * unitPrice
@@ -42,8 +42,13 @@ export class CartsService {
     private readonly logsService: LogsService // Инъекция LogsService
   ) {}
 
-  async addItem(userId: number, addItemDto: AddItemToCartDto): Promise<CartDetails> {
+  async addItem(userId: number | null, guestId: string | null, addItemDto: AddItemToCartDto): Promise<CartDetails> {
     const { productId, type, quantity = 1 } = addItemDto
+
+    // Проверяем, что предоставлен либо userId, либо guestId
+    if (!userId && !guestId) {
+      throw new BadRequestException('Требуется авторизация или guest-id')
+    }
 
     // 1. Проверить, существует ли продукт и можно ли его добавить (например, есть ли нужный тип цены)
     const productExists = await this.drizzle
@@ -66,11 +71,18 @@ export class CartsService {
       throw new BadRequestException(`Продукт ${productId} недоступен в виде "${type}"`)
     }
 
-    // 2. Найти существующий элемент корзины для этого пользователя, продукта и типа
+    // 2. Найти существующий элемент корзины для этого пользователя/гостя, продукта и типа
+    const cartConditions = [eq(carts.productId, productId), eq(carts.type, type)]
+    if (userId) {
+      cartConditions.push(eq(carts.userId, userId))
+    } else {
+      cartConditions.push(eq(carts.guestId, guestId!))
+    }
+
     const existingCartItem = await this.drizzle
       .select()
       .from(carts)
-      .where(and(eq(carts.userId, userId), eq(carts.productId, productId), eq(carts.type, type)))
+      .where(and(...cartConditions))
       .limit(1)
 
     if (existingCartItem.length > 0) {
@@ -86,28 +98,48 @@ export class CartsService {
         throw new Error('Не удалось обновить количество товара в корзине')
       }
     } else {
-      const newCartItems = await this.drizzle.insert(carts).values({ userId, productId, type, quantity }).returning()
+      const cartInsertData: typeof carts.$inferInsert = { productId, type, quantity }
+      if (userId) {
+        cartInsertData.userId = userId
+      } else {
+        cartInsertData.guestId = guestId!
+      }
+
+      const newCartItems = await this.drizzle.insert(carts).values(cartInsertData).returning()
 
       if (!newCartItems || newCartItems.length === 0) {
         throw new Error('Не удалось добавить товар в корзину')
       }
     }
 
-    await this.logsService.createLog('cart_item_added_or_updated', userId, { productId, type, quantity })
+    await this.logsService.createLog('cart_item_added_or_updated', userId || undefined, {
+      productId,
+      type,
+      quantity,
+      guestId
+    })
 
     // Вернуть полную корзину после добавления/обновления
-    return this.getCart(userId)
+    return this.getCart(userId, guestId)
   }
 
   /**
-   * Получает содержимое корзины пользователя с детальной информацией о продуктах
-   * @param userId ID пользователя
+   * Получает содержимое корзины пользователя/гостя с детальной информацией о продуктах
+   * @param userId ID пользователя (null для гостей)
+   * @param guestId ID гостя (null для авторизованных пользователей)
    * @returns Объект CartDetails, содержащий список товаров с детальной информацией
    * о каждом продукте (включая berryShape, color, taste, variety, imageUrl, inStock), общую стоимость корзины
    * и общее количество товаров (totalItems)
    */
-  async getCart(userId: number): Promise<CartDetails> {
+  async getCart(userId: number | null, guestId: string | null = null): Promise<CartDetails> {
+    // Проверяем, что предоставлен либо userId, либо guestId
+    if (!userId && !guestId) {
+      throw new BadRequestException('Требуется авторизация или guest-id')
+    }
     const p = alias(products, 'p')
+
+    // Создаем условие WHERE для поиска корзины
+    const cartWhereCondition = userId ? eq(carts.userId, userId) : eq(carts.guestId, guestId!)
 
     // Получаем данные корзины с информацией о продуктах
     const cartItemsData = await this.drizzle
@@ -115,6 +147,7 @@ export class CartsService {
         // Явно перечисляем поля из carts
         id: carts.id,
         userId: carts.userId,
+        guestId: carts.guestId,
         productId: carts.productId,
         type: carts.type,
         quantity: carts.quantity,
@@ -132,7 +165,7 @@ export class CartsService {
       })
       .from(carts)
       .leftJoin(p, eq(carts.productId, p.id))
-      .where(eq(carts.userId, userId))
+      .where(cartWhereCondition)
 
     // Получаем изображения для всех продуктов в корзине
     const productIds = cartItemsData.map((item) => item.productId)
@@ -174,9 +207,11 @@ export class CartsService {
       const restOfItem = {
         id: item.id,
         userId: item.userId,
+        guestId: item.guestId,
         productId: item.productId,
         type: item.type as 'cutting' | 'seedling',
         quantity: item.quantity,
+        createdAt: new Date(), // Добавляем поле createdAt
         productName: item.productName,
         berryShape: item.berryShape,
         color: item.color,
@@ -201,7 +236,17 @@ export class CartsService {
     }
   }
 
-  async updateItemQuantity(userId: number, itemId: number, quantity: number): Promise<CartItem> {
+  async updateItemQuantity(
+    userId: number | null,
+    guestId: string | null,
+    itemId: number,
+    quantity: number
+  ): Promise<CartItem> {
+    // Проверяем, что предоставлен либо userId, либо guestId
+    if (!userId && !guestId) {
+      throw new BadRequestException('Требуется авторизация или guest-id')
+    }
+
     // 1. Найти элемент по itemId
     const cartItem = await this.drizzle.select().from(carts).where(eq(carts.id, itemId)).limit(1)
 
@@ -209,8 +254,11 @@ export class CartsService {
       throw new NotFoundException(`Элемент корзины с ID ${itemId} не найден`)
     }
 
-    // 2. Проверить, принадлежит ли он пользователю
-    if (cartItem[0].userId !== userId) {
+    // 2. Проверить, принадлежит ли он пользователю/гостю
+    const belongsToUser = userId && cartItem[0].userId === userId
+    const belongsToGuest = guestId && cartItem[0].guestId === guestId
+
+    if (!belongsToUser && !belongsToGuest) {
       throw new ForbiddenException('Вы не можете изменять этот элемент корзины')
     }
 
@@ -223,10 +271,15 @@ export class CartsService {
     return updatedItems[0]
   }
 
-  async removeItem(userId: number, itemId: number): Promise<CartDetails> {
+  async removeItem(userId: number | null, guestId: string | null, itemId: number): Promise<CartDetails> {
+    // Проверяем, что предоставлен либо userId, либо guestId
+    if (!userId && !guestId) {
+      throw new BadRequestException('Требуется авторизация или guest-id')
+    }
+
     // 1. Найти элемент по itemId
     const cartItem = await this.drizzle
-      .select({ id: carts.id, userId: carts.userId }) // Выбираем только нужные поля
+      .select({ id: carts.id, userId: carts.userId, guestId: carts.guestId }) // Выбираем только нужные поля
       .from(carts)
       .where(eq(carts.id, itemId))
       .limit(1)
@@ -237,8 +290,11 @@ export class CartsService {
       throw new NotFoundException(`Элемент корзины с ID ${itemId} не найден`)
     }
 
-    // 2. Проверить, принадлежит ли он пользователю
-    if (cartItem[0].userId !== userId) {
+    // 2. Проверить, принадлежит ли он пользователю/гостю
+    const belongsToUser = userId && cartItem[0].userId === userId
+    const belongsToGuest = guestId && cartItem[0].guestId === guestId
+
+    if (!belongsToUser && !belongsToGuest) {
       throw new ForbiddenException('Вы не можете удалять этот элемент корзины')
     }
 
@@ -246,6 +302,55 @@ export class CartsService {
     await this.drizzle.delete(carts).where(eq(carts.id, itemId))
 
     // Вернуть полную корзину после удаления
-    return this.getCart(userId)
+    return this.getCart(userId, guestId)
+  }
+
+  /**
+   * Переносит корзину гостя пользователю при авторизации
+   */
+  async migrateGuestCartToUser(guestId: string, userId: number): Promise<void> {
+    await this.drizzle.transaction(async (tx) => {
+      // Получаем товары из гостевой корзины
+      const guestCartItems = await tx.select().from(carts).where(eq(carts.guestId, guestId))
+
+      if (guestCartItems.length === 0) {
+        return // Нет товаров для переноса
+      }
+
+      // Получаем существующие товары в корзине пользователя
+      const userCartItems = await tx.select().from(carts).where(eq(carts.userId, userId))
+
+      // Создаем мапу существующих товаров пользователя для быстрого поиска
+      const userCartMap = new Map<string, typeof carts.$inferSelect>()
+      userCartItems.forEach((item) => {
+        const key = `${item.productId}_${item.type}`
+        userCartMap.set(key, item)
+      })
+
+      // Обрабатываем каждый товар из гостевой корзины
+      for (const guestItem of guestCartItems) {
+        const key = `${guestItem.productId}_${guestItem.type}`
+        const existingUserItem = userCartMap.get(key)
+
+        if (existingUserItem) {
+          // Если такой товар уже есть в корзине пользователя, увеличиваем количество
+          await tx
+            .update(carts)
+            .set({ quantity: existingUserItem.quantity + guestItem.quantity })
+            .where(eq(carts.id, existingUserItem.id))
+        } else {
+          // Если товара нет, создаем новую запись для пользователя
+          await tx.insert(carts).values({
+            userId,
+            productId: guestItem.productId,
+            type: guestItem.type,
+            quantity: guestItem.quantity
+          })
+        }
+      }
+
+      // Удаляем гостевую корзину
+      await tx.delete(carts).where(eq(carts.guestId, guestId))
+    })
   }
 }

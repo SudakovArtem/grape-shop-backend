@@ -15,6 +15,7 @@ import { DbModule } from './db/db.module'
 import { ArticlesModule } from './articles/articles.module'
 import { ArticleCategoriesModule } from './article-categories/article-categories.module'
 import { PaymentModule } from './payment/payment.module'
+import { CommonModule } from './common/common.module'
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { PaymentModule } from './payment/payment.module'
     DbModule,
     ArticlesModule,
     ArticleCategoriesModule,
-    PaymentModule
+    PaymentModule,
+    CommonModule
   ],
   providers: [
     {

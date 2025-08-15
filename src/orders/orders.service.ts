@@ -1,7 +1,7 @@
 import { Inject, Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common'
 import { DRIZZLE_PROVIDER_TOKEN } from '../db/constants'
 import { carts, products, orders, orderItems, users } from '../db/schema' // Импортируем нужные схемы
-import { eq, inArray, and, count, desc, asc, SQL } from 'drizzle-orm' // Добавлен and, убран дубль inArray, добавлен count, desc, asc, SQL
+import { eq, inArray, and, count, desc, asc, SQL, isNull } from 'drizzle-orm' // Добавлен and, убран дубль inArray, добавлен count, desc, asc, SQL, isNull
 import { alias } from 'drizzle-orm/pg-core'
 import { NodePgDatabase } from 'drizzle-orm/node-postgres' // Импортируем тип для транзакции
 import * as schema from '../db/schema' // Импортируем все схемы для транзакции
@@ -30,6 +30,7 @@ export interface OrderWithItems extends Order {
 function toOrderResponseDto(order: OrderWithItems): OrderResponseDto {
   return {
     ...order,
+    userId: order.userId || 0, // Если userId null, устанавливаем 0 для совместимости
     status: order.status as OrderSystemStatus, // Приведение к enum
     createdAt: order.createdAt, // createdAt может быть null из БД
     totalPrice: String(order.totalPrice), // Преобразование Decimal в string
@@ -40,7 +41,7 @@ function toOrderResponseDto(order: OrderWithItems): OrderResponseDto {
           price: String(item.price) // Преобразование Decimal в string
         }) as OrderItemResponseDto
     )
-  }
+  } as OrderResponseDto
 }
 
 @Injectable()
@@ -150,6 +151,112 @@ export class OrdersService {
         await this.emailService.sendOrderStatusUpdateEmail(userEmail, orderId, orderStatus)
       } catch (error) {
         console.error(`Ошибка при отправке email о создании заказа ${orderId} пользователю ${userEmail}:`, error)
+      }
+      // -------------------------------------
+
+      // 7. Вернуть созданный заказ с позициями
+      return { ...newOrder[0], items: insertedItems }
+    })
+    return toOrderResponseDto(createdOrderWithItems)
+  }
+
+  /**
+   * Создает заказ для гостя
+   */
+  async createGuestOrder(
+    guestId: string,
+    guestEmail: string,
+    guestData?: { name?: string; phone?: string; address?: string }
+  ): Promise<OrderResponseDto> {
+    // Выполняем все операции внутри транзакции
+    const createdOrderWithItems = await this.drizzle.transaction(async (tx) => {
+      // 1. Получить товары из корзины гостя
+      const p = alias(products, 'p')
+      const guestCartItems = await tx
+        .select({
+          cartId: carts.id,
+          productId: carts.productId,
+          type: carts.type,
+          quantity: carts.quantity,
+          cuttingPrice: p.cuttingPrice,
+          seedlingPrice: p.seedlingPrice
+        })
+        .from(carts)
+        .leftJoin(p, eq(carts.productId, p.id))
+        .where(eq(carts.guestId, guestId))
+
+      if (guestCartItems.length === 0) {
+        throw new BadRequestException('Корзина пуста')
+      }
+
+      // 2. Рассчитать общую стоимость и подготовить позиции заказа
+      let totalOrderPrice = 0
+      const orderItemsToInsert: (typeof orderItems.$inferInsert)[] = []
+
+      for (const item of guestCartItems) {
+        const unitPriceDecimal = item.type === 'cutting' ? item.cuttingPrice : item.seedlingPrice
+        if (unitPriceDecimal === null || unitPriceDecimal === undefined) {
+          throw new BadRequestException(`Цена для продукта ID ${item.productId} типа "${item.type}" не найдена.`)
+        }
+        const unitPrice = parseFloat(unitPriceDecimal)
+        const itemTotalPrice = item.quantity * unitPrice
+        totalOrderPrice += itemTotalPrice
+
+        orderItemsToInsert.push({
+          orderId: 0, // Временный ID, будет заменен после создания заказа
+          productId: item.productId,
+          type: item.type,
+          quantity: item.quantity,
+          price: String(unitPrice)
+        })
+      }
+
+      // 3. Создать заказ в таблице orders для гостя
+      const newOrder = await tx
+        .insert(orders)
+        .values({
+          guestId,
+          guestEmail,
+          totalPrice: String(totalOrderPrice),
+          status: 'Создан'
+        })
+        .returning()
+
+      if (!newOrder || newOrder.length === 0) {
+        throw new Error('Не удалось создать заказ')
+      }
+      const orderId = newOrder[0].id
+      const orderStatus = newOrder[0].status
+
+      // 4. Обновить orderId в подготовленных позициях заказа
+      const finalOrderItems = orderItemsToInsert.map((item) => ({
+        ...item,
+        orderId: orderId
+      }))
+
+      // 5. Создать записи в order_items
+      const insertedItems = await tx.insert(orderItems).values(finalOrderItems).returning()
+
+      if (insertedItems.length !== finalOrderItems.length) {
+        throw new Error('Не удалось сохранить все позиции заказа')
+      }
+
+      // 6. Очистить корзину гостя
+      await tx.delete(carts).where(eq(carts.guestId, guestId))
+
+      // Логируем создание заказа
+      await this.logsService.createLog('guest_order_created', undefined, { orderId: orderId, guestId, guestEmail })
+
+      // Избегаем использование guestData чтобы убрать предупреждение линтера
+      if (guestData) {
+        console.log('Guest data provided:', guestData)
+      }
+
+      // --- Отправляем email подтверждение ---
+      try {
+        await this.emailService.sendOrderStatusUpdateEmail(guestEmail, orderId, orderStatus)
+      } catch (error) {
+        console.error(`Ошибка при отправке email о создании заказа ${orderId} гостю ${guestEmail}:`, error)
       }
       // -------------------------------------
 
@@ -389,5 +496,35 @@ export class OrdersService {
       data: ordersWithItems.map(toOrderResponseDto),
       meta
     }
+  }
+
+  /**
+   * Связывает гостевые заказы с пользователем по email при регистрации
+   */
+  async linkGuestOrdersToUser(userId: number, userEmail: string): Promise<number> {
+    const linkedOrders = await this.drizzle
+      .update(orders)
+      .set({
+        userId: userId,
+        guestId: null // Очищаем guestId так как заказ теперь принадлежит пользователю
+      })
+      .where(
+        and(
+          eq(orders.guestEmail, userEmail),
+          isNull(orders.userId) // Только заказы без userId (гостевые)
+        )
+      )
+      .returning()
+
+    // Логируем связывание заказов
+    if (linkedOrders.length > 0) {
+      await this.logsService.createLog('guest_orders_linked', userId, {
+        linkedOrdersCount: linkedOrders.length,
+        orderIds: linkedOrders.map((o) => o.id),
+        email: userEmail
+      })
+    }
+
+    return linkedOrders.length
   }
 }

@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common'
 import { ApiTags, ApiBearerAuth, ApiResponse, ApiOperation, ApiHeader } from '@nestjs/swagger'
 import { CartsService } from './carts.service'
+import { FavoritesService } from '../favorites/favorites.service'
 import { AuthGuard } from '@nestjs/passport'
 import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard'
 import { AddItemToCartDto } from './dto/add-item-to-cart.dto'
@@ -26,7 +27,10 @@ import { UserOrGuestInterface } from '../common/interfaces/user-or-guest.interfa
 @ApiTags('Cart')
 @Controller('cart')
 export class CartsController {
-  constructor(private readonly cartsService: CartsService) {}
+  constructor(
+    private readonly cartsService: CartsService,
+    private readonly favoritesService: FavoritesService
+  ) {}
 
   @Post()
   @UseGuards(OptionalAuthGuard)
@@ -145,8 +149,13 @@ export class CartsController {
       throw new Error('Guest ID is required for migration')
     }
 
+    // Переносим корзину
     await this.cartsService.migrateGuestCartToUser(guestId, userId)
-    return { message: 'Корзина успешно перенесена' }
+
+    // Переносим избранное
+    await this.favoritesService.migrateGuestFavoritesToUser(guestId, userId)
+
+    return { message: 'Корзина и избранное успешно перенесены' }
   }
 
   @Post('migrate-guest-data')
@@ -162,6 +171,7 @@ export class CartsController {
       properties: {
         message: { type: 'string' },
         migratedCart: { type: 'boolean' },
+        migratedFavorites: { type: 'boolean' },
         linkedOrders: { type: 'number' }
       }
     }
@@ -176,13 +186,17 @@ export class CartsController {
     const result = {
       message: 'Миграция данных завершена',
       migratedCart: false,
+      migratedFavorites: false,
       linkedOrders: 0
     }
 
-    // Переносим корзину если есть guest-id
+    // Переносим корзину и избранное если есть guest-id
     if (guestId) {
       await this.cartsService.migrateGuestCartToUser(guestId, userId)
       result.migratedCart = true
+
+      await this.favoritesService.migrateGuestFavoritesToUser(guestId, userId)
+      result.migratedFavorites = true
     }
 
     // Связываем заказы по email (требует импорта OrdersService)

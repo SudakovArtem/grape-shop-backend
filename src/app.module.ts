@@ -16,6 +16,7 @@ import { ArticlesModule } from './articles/articles.module'
 import { ArticleCategoriesModule } from './article-categories/article-categories.module'
 import { PaymentModule } from './payment/payment.module'
 import { CommonModule } from './common/common.module'
+import { FavoritesModule } from './favorites/favorites.module'
 
 @Module({
   imports: [
@@ -39,7 +40,8 @@ import { CommonModule } from './common/common.module'
     ArticlesModule,
     ArticleCategoriesModule,
     PaymentModule,
-    CommonModule
+    CommonModule,
+    FavoritesModule
   ],
   providers: [
     {

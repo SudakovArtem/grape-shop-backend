@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { db } from '../db'
 import { articles, users, articleCategories } from '../db/schema'
-import { eq, sql, desc, asc, and, inArray } from 'drizzle-orm'
+import { eq, sql, desc, asc, and, inArray, notInArray } from 'drizzle-orm'
 import { CreateArticleDto, UpdateArticleDto, FindAllArticlesQueryDto, SortOrder } from './dto'
 import { generateSlug } from '../common/utils/slug.utils'
 
@@ -86,6 +86,7 @@ export class ArticlesService {
       search,
       published,
       categoryId,
+      exclude,
       sortBy = 'createdAt',
       sortOrder = SortOrder.DESC
     } = query
@@ -102,6 +103,11 @@ export class ArticlesService {
     // Добавляем фильтр по категории, если он указан
     if (categoryId) {
       conditions.push(eq(articles.categoryId, categoryId))
+    }
+
+    // Добавляем фильтр исключения по ID статей
+    if (exclude && exclude.length > 0) {
+      conditions.push(notInArray(articles.id, exclude))
     }
 
     // Добавляем поиск по заголовку и содержимому

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { Type } from 'class-transformer'
-import { IsOptional, IsString, IsInt, Min, Max, IsBoolean, IsEnum } from 'class-validator'
+import { Type, Transform } from 'class-transformer'
+import { IsOptional, IsString, IsInt, Min, Max, IsBoolean, IsEnum, IsArray } from 'class-validator'
 
 export enum SortOrder {
   ASC = 'asc',
@@ -59,6 +59,24 @@ export class FindAllArticlesQueryDto {
   @IsInt()
   @Type(() => Number)
   categoryId?: number
+
+  @ApiProperty({
+    description: 'ID статей для исключения из результатов (может быть массивом)',
+    type: 'number',
+    isArray: true,
+    example: [1, 5, 10]
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => Number(v))
+    }
+    return [Number(value)]
+  })
+  @IsArray()
+  @Type(() => Number)
+  @IsInt({ each: true, message: 'ID для исключения должен быть целым числом' })
+  exclude?: number[]
 
   @ApiProperty({
     description: 'Поле для сортировки (по умолчанию createdAt)',

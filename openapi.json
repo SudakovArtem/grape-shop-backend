@@ -4066,6 +4066,23 @@
             }
           },
           {
+            "name": "exclude",
+            "required": true,
+            "in": "query",
+            "description": "ID статей для исключения из результатов (может быть массивом)",
+            "schema": {
+              "example": [
+                1,
+                5,
+                10
+              ],
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          {
             "name": "sortBy",
             "required": false,
             "in": "query",

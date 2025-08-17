@@ -2623,6 +2623,9 @@
                     "migratedCart": {
                       "type": "boolean"
                     },
+                    "migratedFavorites": {
+                      "type": "boolean"
+                    },
                     "linkedOrders": {
                       "type": "number"
                     }
@@ -2640,6 +2643,495 @@
         "summary": "Перенести корзину и заказы гостя по email авторизованному пользователю",
         "tags": [
           "Cart"
+        ]
+      }
+    },
+    "/favorites": {
+      "post": {
+        "operationId": "FavoritesController_addToFavorites",
+        "parameters": [
+          {
+            "name": "x-guest-id",
+            "in": "header",
+            "description": "ID гостя (для неавторизованных пользователей)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productId": {
+                    "type": "number",
+                    "description": "ID продукта для добавления в избранное",
+                    "example": 1
+                  }
+                },
+                "required": [
+                  "productId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Продукт успешно добавлен в избранное",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "ID записи в избранном",
+                      "example": 1
+                    },
+                    "productId": {
+                      "type": "number",
+                      "description": "ID продукта",
+                      "example": 1
+                    },
+                    "productName": {
+                      "type": "string",
+                      "description": "Название продукта",
+                      "example": "Мускат Белый"
+                    },
+                    "productSlug": {
+                      "type": "string",
+                      "description": "Slug продукта для формирования URL",
+                      "example": "muskat-belyy"
+                    },
+                    "productDescription": {
+                      "type": "object",
+                      "description": "Описание продукта",
+                      "example": "Отличный сорт винограда...",
+                      "nullable": true
+                    },
+                    "cuttingPrice": {
+                      "type": "object",
+                      "description": "Цена черенков",
+                      "example": 150,
+                      "nullable": true
+                    },
+                    "seedlingPrice": {
+                      "type": "object",
+                      "description": "Цена саженцев",
+                      "example": 300,
+                      "nullable": true
+                    },
+                    "imageUrl": {
+                      "type": "object",
+                      "description": "URL главного изображения продукта",
+                      "example": "https://example.com/image.jpg",
+                      "nullable": true
+                    },
+                    "berryShape": {
+                      "type": "object",
+                      "description": "Форма ягод",
+                      "example": "овальная",
+                      "nullable": true
+                    },
+                    "color": {
+                      "type": "object",
+                      "description": "Цвет ягод",
+                      "example": "белый",
+                      "nullable": true
+                    },
+                    "taste": {
+                      "type": "object",
+                      "description": "Вкус ягод",
+                      "example": "мускатный",
+                      "nullable": true
+                    },
+                    "variety": {
+                      "type": "object",
+                      "description": "Сорт винограда",
+                      "example": "Мускат Белый",
+                      "nullable": true
+                    },
+                    "cuttingInStock": {
+                      "type": "object",
+                      "description": "Количество черенков в наличии",
+                      "example": 10,
+                      "nullable": true
+                    },
+                    "seedlingInStock": {
+                      "type": "object",
+                      "description": "Количество саженцев в наличии",
+                      "example": 5,
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "format": "date-time",
+                      "type": "string",
+                      "description": "Дата добавления в избранное",
+                      "example": "2024-01-01T00:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "productId",
+                    "productName",
+                    "productSlug",
+                    "productDescription",
+                    "cuttingPrice",
+                    "seedlingPrice",
+                    "imageUrl",
+                    "berryShape",
+                    "color",
+                    "taste",
+                    "variety",
+                    "cuttingInStock",
+                    "seedlingInStock",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректные данные"
+          },
+          "404": {
+            "description": "Продукт не найден"
+          },
+          "409": {
+            "description": "Продукт уже в избранном"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Добавить продукт в избранное",
+        "tags": [
+          "Избранное"
+        ]
+      },
+      "get": {
+        "operationId": "FavoritesController_getFavorites",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Номер страницы",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Количество элементов на странице",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "x-guest-id",
+            "in": "header",
+            "description": "ID гостя (для неавторизованных пользователей)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список избранных продуктов",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "description": "Список избранных продуктов",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "description": "ID записи в избранном",
+                            "example": 1
+                          },
+                          "productId": {
+                            "type": "number",
+                            "description": "ID продукта",
+                            "example": 1
+                          },
+                          "productName": {
+                            "type": "string",
+                            "description": "Название продукта",
+                            "example": "Мускат Белый"
+                          },
+                          "productSlug": {
+                            "type": "string",
+                            "description": "Slug продукта для формирования URL",
+                            "example": "muskat-belyy"
+                          },
+                          "productDescription": {
+                            "type": "object",
+                            "description": "Описание продукта",
+                            "example": "Отличный сорт винограда...",
+                            "nullable": true
+                          },
+                          "cuttingPrice": {
+                            "type": "object",
+                            "description": "Цена черенков",
+                            "example": 150,
+                            "nullable": true
+                          },
+                          "seedlingPrice": {
+                            "type": "object",
+                            "description": "Цена саженцев",
+                            "example": 300,
+                            "nullable": true
+                          },
+                          "imageUrl": {
+                            "type": "object",
+                            "description": "URL главного изображения продукта",
+                            "example": "https://example.com/image.jpg",
+                            "nullable": true
+                          },
+                          "berryShape": {
+                            "type": "object",
+                            "description": "Форма ягод",
+                            "example": "овальная",
+                            "nullable": true
+                          },
+                          "color": {
+                            "type": "object",
+                            "description": "Цвет ягод",
+                            "example": "белый",
+                            "nullable": true
+                          },
+                          "taste": {
+                            "type": "object",
+                            "description": "Вкус ягод",
+                            "example": "мускатный",
+                            "nullable": true
+                          },
+                          "variety": {
+                            "type": "object",
+                            "description": "Сорт винограда",
+                            "example": "Мускат Белый",
+                            "nullable": true
+                          },
+                          "cuttingInStock": {
+                            "type": "object",
+                            "description": "Количество черенков в наличии",
+                            "example": 10,
+                            "nullable": true
+                          },
+                          "seedlingInStock": {
+                            "type": "object",
+                            "description": "Количество саженцев в наличии",
+                            "example": 5,
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string",
+                            "description": "Дата добавления в избранное",
+                            "example": "2024-01-01T00:00:00.000Z"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "productId",
+                          "productName",
+                          "productSlug",
+                          "productDescription",
+                          "cuttingPrice",
+                          "seedlingPrice",
+                          "imageUrl",
+                          "berryShape",
+                          "color",
+                          "taste",
+                          "variety",
+                          "cuttingInStock",
+                          "seedlingInStock",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "meta": {
+                      "description": "Метаданные пагинации",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "number",
+                              "description": "Общее количество элементов"
+                            },
+                            "page": {
+                              "type": "number",
+                              "description": "Текущая страница"
+                            },
+                            "limit": {
+                              "type": "number",
+                              "description": "Количество элементов на странице"
+                            },
+                            "lastPage": {
+                              "type": "number",
+                              "description": "Последняя страница"
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "page",
+                            "limit",
+                            "lastPage"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректные параметры запроса"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Получить список избранных продуктов",
+        "tags": [
+          "Избранное"
+        ]
+      }
+    },
+    "/favorites/{productId}/check": {
+      "get": {
+        "operationId": "FavoritesController_checkFavorite",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "description": "ID продукта",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "x-guest-id",
+            "in": "header",
+            "description": "ID гостя (для неавторизованных пользователей)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Статус продукта в избранном",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isFavorite": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Проверить, находится ли продукт в избранном",
+        "tags": [
+          "Избранное"
+        ]
+      }
+    },
+    "/favorites/{productId}": {
+      "delete": {
+        "operationId": "FavoritesController_removeFromFavorites",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "description": "ID продукта для удаления из избранного",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "x-guest-id",
+            "in": "header",
+            "description": "ID гостя (для неавторизованных пользователей)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Продукт успешно удален из избранного",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Сообщение от сервера",
+                      "example": "Операция успешно выполнена."
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Продукт не найден в избранном"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Удалить продукт из избранного",
+        "tags": [
+          "Избранное"
         ]
       }
     },
@@ -6139,6 +6631,280 @@
           "productId",
           "type",
           "quantity"
+        ]
+      },
+      "AddToFavoritesDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "number",
+            "description": "ID продукта для добавления в избранное",
+            "example": 1
+          }
+        },
+        "required": [
+          "productId"
+        ]
+      },
+      "FavoriteResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "ID записи в избранном",
+            "example": 1
+          },
+          "productId": {
+            "type": "number",
+            "description": "ID продукта",
+            "example": 1
+          },
+          "productName": {
+            "type": "string",
+            "description": "Название продукта",
+            "example": "Мускат Белый"
+          },
+          "productSlug": {
+            "type": "string",
+            "description": "Slug продукта для формирования URL",
+            "example": "muskat-belyy"
+          },
+          "productDescription": {
+            "type": "object",
+            "description": "Описание продукта",
+            "example": "Отличный сорт винограда...",
+            "nullable": true
+          },
+          "cuttingPrice": {
+            "type": "object",
+            "description": "Цена черенков",
+            "example": 150,
+            "nullable": true
+          },
+          "seedlingPrice": {
+            "type": "object",
+            "description": "Цена саженцев",
+            "example": 300,
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "object",
+            "description": "URL главного изображения продукта",
+            "example": "https://example.com/image.jpg",
+            "nullable": true
+          },
+          "berryShape": {
+            "type": "object",
+            "description": "Форма ягод",
+            "example": "овальная",
+            "nullable": true
+          },
+          "color": {
+            "type": "object",
+            "description": "Цвет ягод",
+            "example": "белый",
+            "nullable": true
+          },
+          "taste": {
+            "type": "object",
+            "description": "Вкус ягод",
+            "example": "мускатный",
+            "nullable": true
+          },
+          "variety": {
+            "type": "object",
+            "description": "Сорт винограда",
+            "example": "Мускат Белый",
+            "nullable": true
+          },
+          "cuttingInStock": {
+            "type": "object",
+            "description": "Количество черенков в наличии",
+            "example": 10,
+            "nullable": true
+          },
+          "seedlingInStock": {
+            "type": "object",
+            "description": "Количество саженцев в наличии",
+            "example": 5,
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Дата добавления в избранное",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "productName",
+          "productSlug",
+          "productDescription",
+          "cuttingPrice",
+          "seedlingPrice",
+          "imageUrl",
+          "berryShape",
+          "color",
+          "taste",
+          "variety",
+          "cuttingInStock",
+          "seedlingInStock",
+          "createdAt"
+        ]
+      },
+      "PaginatedFavoriteResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Список избранных продуктов",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number",
+                  "description": "ID записи в избранном",
+                  "example": 1
+                },
+                "productId": {
+                  "type": "number",
+                  "description": "ID продукта",
+                  "example": 1
+                },
+                "productName": {
+                  "type": "string",
+                  "description": "Название продукта",
+                  "example": "Мускат Белый"
+                },
+                "productSlug": {
+                  "type": "string",
+                  "description": "Slug продукта для формирования URL",
+                  "example": "muskat-belyy"
+                },
+                "productDescription": {
+                  "type": "object",
+                  "description": "Описание продукта",
+                  "example": "Отличный сорт винограда...",
+                  "nullable": true
+                },
+                "cuttingPrice": {
+                  "type": "object",
+                  "description": "Цена черенков",
+                  "example": 150,
+                  "nullable": true
+                },
+                "seedlingPrice": {
+                  "type": "object",
+                  "description": "Цена саженцев",
+                  "example": 300,
+                  "nullable": true
+                },
+                "imageUrl": {
+                  "type": "object",
+                  "description": "URL главного изображения продукта",
+                  "example": "https://example.com/image.jpg",
+                  "nullable": true
+                },
+                "berryShape": {
+                  "type": "object",
+                  "description": "Форма ягод",
+                  "example": "овальная",
+                  "nullable": true
+                },
+                "color": {
+                  "type": "object",
+                  "description": "Цвет ягод",
+                  "example": "белый",
+                  "nullable": true
+                },
+                "taste": {
+                  "type": "object",
+                  "description": "Вкус ягод",
+                  "example": "мускатный",
+                  "nullable": true
+                },
+                "variety": {
+                  "type": "object",
+                  "description": "Сорт винограда",
+                  "example": "Мускат Белый",
+                  "nullable": true
+                },
+                "cuttingInStock": {
+                  "type": "object",
+                  "description": "Количество черенков в наличии",
+                  "example": 10,
+                  "nullable": true
+                },
+                "seedlingInStock": {
+                  "type": "object",
+                  "description": "Количество саженцев в наличии",
+                  "example": 5,
+                  "nullable": true
+                },
+                "createdAt": {
+                  "format": "date-time",
+                  "type": "string",
+                  "description": "Дата добавления в избранное",
+                  "example": "2024-01-01T00:00:00.000Z"
+                }
+              },
+              "required": [
+                "id",
+                "productId",
+                "productName",
+                "productSlug",
+                "productDescription",
+                "cuttingPrice",
+                "seedlingPrice",
+                "imageUrl",
+                "berryShape",
+                "color",
+                "taste",
+                "variety",
+                "cuttingInStock",
+                "seedlingInStock",
+                "createdAt"
+              ]
+            }
+          },
+          "meta": {
+            "description": "Метаданные пагинации",
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "number",
+                    "description": "Общее количество элементов"
+                  },
+                  "page": {
+                    "type": "number",
+                    "description": "Текущая страница"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Количество элементов на странице"
+                  },
+                  "lastPage": {
+                    "type": "number",
+                    "description": "Последняя страница"
+                  }
+                },
+                "required": [
+                  "total",
+                  "page",
+                  "limit",
+                  "lastPage"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "meta"
         ]
       },
       "OrderItemResponseDto": {

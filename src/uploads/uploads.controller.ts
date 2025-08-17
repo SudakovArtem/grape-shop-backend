@@ -14,7 +14,7 @@ import { UploadsService } from './uploads.service'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 
-@ApiTags('uploads')
+@ApiTags('Uploads')
 @Controller('uploads')
 export class UploadsController {
   constructor(private readonly uploadsService: UploadsService) {}

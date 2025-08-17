@@ -19,7 +19,7 @@ import { UserOrGuestInterface } from '../common/interfaces/user-or-guest.interfa
 import { OptionalAuthGuard } from '../auth/guards/optional-auth.guard'
 import { MessageResponseDto } from '../common/dto/message-response.dto'
 
-@ApiTags('Избранное')
+@ApiTags('Favorites')
 @Controller('favorites')
 @UseGuards(OptionalAuthGuard)
 export class FavoritesController {
